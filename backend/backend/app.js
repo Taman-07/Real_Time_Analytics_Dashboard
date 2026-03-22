@@ -1,20 +1,18 @@
-const express = require("express");
-const cors = require("cors");
-
-const analyticsRoutes = require("./routes/analyticsRoutes");
+import express from "express";
+import cors from "cors";
+import analyticsRoutes from "./routes/analyticsRoutes.js";
 
 const app = express();
-
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Routes
-app.use("/api/analytics", analyticsRoutes);
-
-// Health check route
-app.get("/", (req, res) => {
-    res.send("API is running...");
+// attach io to req for sockets
+app.use((req, res, next) => {
+  req.io = req.app.get("io");
+  next();
 });
 
-module.exports = app;
+// routes
+app.use("/api/analytics", analyticsRoutes);
+
+export default app;
