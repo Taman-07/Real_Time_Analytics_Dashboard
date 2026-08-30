@@ -9,10 +9,30 @@ import session from "express-session";
 import http from "http";
 import { Server } from "socket.io";
 
+
 import connectDB from "./config/db.js";
 
-import analyticsRoutes from "./routes/analyticsRoutes.js";
-import authRoutes from "./routes/authRoutes.js";
+
+import analyticsRoutes
+    from "./routes/analyticsRoutes.js";
+
+import authRoutes
+    from "./routes/authRoutes.js";
+
+
+import {
+    analyticsSocket
+} from "./socket/analyticsSocket.js";
+
+
+import {
+    syncExternalProducts
+} from "./services/externalDataService.js";
+
+
+import {
+    startLiveEventEngine
+} from "./services/liveEventEngine.js";
 
 
 // ============================================================
@@ -23,65 +43,54 @@ dotenv.config();
 
 
 // ============================================================
-// CONNECT DATABASE
+// DATABASE
 // ============================================================
 
 await connectDB();
 
 
 // ============================================================
-// EXPRESS APP
+// EXPRESS
 // ============================================================
 
-const app = express();
+const app =
+    express();
 
 
 // ============================================================
 // HTTP SERVER
 // ============================================================
 
-const server = http.createServer(app);
+const server =
+    http.createServer(app);
 
 
 // ============================================================
 // SOCKET.IO
 // ============================================================
 
-const io = new Server(server, {
+const io =
+    new Server(
+        server,
+        {
 
-    cors: {
+            cors: {
 
-        origin: "http://localhost:5173",
+                origin:
+                    "http://localhost:5173",
 
-        credentials: true
-
-    }
-
-});
-
-
-// ============================================================
-// SOCKET CONNECTION
-// ============================================================
-
-io.on("connection", (socket) => {
-
-    console.log(
-        "Dashboard connected:",
-        socket.id
+                credentials:
+                    true
+            }
+        }
     );
 
 
-    socket.on("disconnect", () => {
+// ============================================================
+// SOCKET HANDLER
+// ============================================================
 
-        console.log(
-            "Dashboard disconnected:",
-            socket.id
-        );
-
-    });
-
-});
+analyticsSocket(io);
 
 
 // ============================================================
@@ -95,8 +104,8 @@ app.use(
         origin:
             "http://localhost:5173",
 
-        credentials: true
-
+        credentials:
+            true
     })
 
 );
@@ -119,19 +128,25 @@ app.use(
             process.env.SESSION_SECRET ||
             "shoplytics-secret",
 
-        resave: false,
+        resave:
+            false,
 
-        saveUninitialized: false,
+        saveUninitialized:
+            false,
 
         cookie: {
 
-            httpOnly: true,
+            httpOnly:
+                true,
 
-            secure: false,
+            secure:
+                false,
 
             maxAge:
-                1000 * 60 * 60 * 24
-
+                1000 *
+                60 *
+                60 *
+                24
         }
 
     })
@@ -140,16 +155,18 @@ app.use(
 
 
 // ============================================================
-// MAKE SOCKET.IO AVAILABLE TO CONTROLLERS
+// SOCKET AVAILABLE IN CONTROLLERS
 // ============================================================
 
-app.use((req, res, next) => {
+app.use(
+    (req, res, next) => {
 
-    req.io = io;
+        req.io =
+            io;
 
-    next();
-
-});
+        next();
+    }
+);
 
 
 // ============================================================
@@ -172,18 +189,66 @@ app.use(
 // HEALTH CHECK
 // ============================================================
 
-app.get("/", (req, res) => {
+app.get(
+    "/",
+    (req, res) => {
 
-    res.json({
+        res.json({
 
-        success: true,
+            success:
+                true,
 
-        message:
-            "Shoplytics API is running"
+            message:
+                "Shoplytics API is running"
+        });
 
-    });
+    }
+);
 
-});
+
+// ============================================================
+// EXTERNAL PRODUCTS
+// ============================================================
+
+const startExternalSync =
+    async () => {
+
+        await syncExternalProducts(
+            io
+        );
+
+
+        setInterval(
+            async () => {
+
+                await syncExternalProducts(
+                    io
+                );
+
+            },
+            60000
+        );
+
+    };
+
+
+// ============================================================
+// START LIVE ENGINE
+// ============================================================
+
+const startServices =
+    async () => {
+
+        await startExternalSync();
+
+        startLiveEventEngine(
+            io
+        );
+
+    };
+
+
+startServices();
 
 
 // ============================================================
@@ -191,7 +256,8 @@ app.get("/", (req, res) => {
 // ============================================================
 
 const PORT =
-    process.env.PORT || 5000;
+    process.env.PORT ||
+    5000;
 
 
 server.listen(
@@ -199,7 +265,7 @@ server.listen(
     () => {
 
         console.log(
-            `Server running on port ${PORT}`
+            `🚀 Shoplytics server running on port ${PORT}`
         );
 
     }

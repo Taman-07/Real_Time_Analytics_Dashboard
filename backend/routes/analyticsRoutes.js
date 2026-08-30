@@ -4,21 +4,18 @@ import {
     createEvent,
     getDashboardAnalytics,
     getRecentEvents,
-
-    createOrder,
-    updateOrderStatus,
-
     createProduct,
-    getProducts
-
+    createOrder,
+    updateOrderStatus
 } from "../controllers/analyticsController.js";
 
 
-const router = express.Router();
+const router =
+    express.Router();
 
 
 // ============================================================
-// ANALYTICS / EVENTS
+// EVENTS
 // ============================================================
 
 router.post(
@@ -26,14 +23,30 @@ router.post(
     createEvent
 );
 
+
+router.get(
+    "/events",
+    getRecentEvents
+);
+
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+
 router.get(
     "/dashboard",
     getDashboardAnalytics
 );
 
-router.get(
-    "/events",
-    getRecentEvents
+
+// ============================================================
+// PRODUCTS
+// ============================================================
+
+router.post(
+    "/product",
+    createProduct
 );
 
 
@@ -46,24 +59,10 @@ router.post(
     createOrder
 );
 
+
 router.patch(
     "/orders/:orderId/status",
     updateOrderStatus
-);
-
-
-// ============================================================
-// PRODUCTS
-// ============================================================
-
-router.post(
-    "/products",
-    createProduct
-);
-
-router.get(
-    "/products",
-    getProducts
 );
 
 

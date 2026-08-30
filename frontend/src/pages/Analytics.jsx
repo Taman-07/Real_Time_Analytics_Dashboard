@@ -1,3 +1,7 @@
+// ============================================================
+// SHOPLYTICS - REAL-TIME ANALYTICS
+// ============================================================
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -11,10 +15,12 @@ import {
     LogOut,
     Bell,
     TrendingUp,
-    TrendingDown,
     Package,
     CircleDollarSign,
-    Activity
+    Activity,
+    Search,
+    Eye,
+    CreditCard
 } from "lucide-react";
 
 import {
@@ -28,93 +34,128 @@ import {
 } from "recharts";
 
 import API from "../services/api";
+import socket from "../services/socket";
 
 import "../App.css";
 
+
+// ============================================================
+// ANALYTICS COMPONENT
+// ============================================================
 
 function Analytics() {
 
     const navigate = useNavigate();
 
-    const [user, setUser] = useState(null);
 
-    const [data, setData] = useState(null);
+    // =========================================================
+    // STATE
+    // =========================================================
 
-    const [loading, setLoading] = useState(true);
+    const [user, setUser] =
+        useState(null);
 
-    const [error, setError] = useState("");
+    const [data, setData] =
+        useState(null);
+
+    const [loading, setLoading] =
+        useState(true);
+
+    const [error, setError] =
+        useState("");
+
+    const [liveEvents, setLiveEvents] =
+        useState([]);
 
 
     // =========================================================
-    // LOAD USER + ANALYTICS
+    // LOAD DASHBOARD
     // =========================================================
 
     useEffect(() => {
 
-        const loadDashboard = async () => {
+        const loadDashboard =
+            async () => {
 
-            try {
+                try {
 
-                // Check authentication
+                    // =================================================
+                    // CHECK AUTHENTICATION
+                    // =================================================
 
-                const userResponse =
-                    await API.get("/auth/me");
-
-
-                if (
-                    !userResponse.data.success
-                ) {
-
-                    navigate("/login");
-
-                    return;
-
-                }
+                    const userResponse =
+                        await API.get(
+                            "/auth/me"
+                        );
 
 
-                setUser(
-                    userResponse.data.user
-                );
+                    if (
+                        !userResponse.data.success
+                    ) {
+
+                        navigate("/login");
+
+                        return;
+
+                    }
 
 
-                // Get analytics
-
-                const analyticsResponse =
-                    await API.get(
-                        "/analytics/dashboard"
+                    setUser(
+                        userResponse.data.user
                     );
 
 
-                if (
-                    analyticsResponse.data.success
-                ) {
+                    // =================================================
+                    // GET ANALYTICS
+                    // =================================================
 
-                    setData(
-                        analyticsResponse.data
+                    const analyticsResponse =
+                        await API.get(
+                            "/analytics/dashboard"
+                        );
+
+
+                    if (
+                        analyticsResponse.data.success
+                    ) {
+
+                        setData(
+                            analyticsResponse.data
+                        );
+
+                    }
+
+                } catch (err) {
+
+                    console.error(
+                        "Dashboard error:",
+                        err
                     );
+
+
+                    if (
+                        err.response?.status === 401
+                    ) {
+
+                        navigate("/login");
+
+                        return;
+
+                    }
+
+
+                    setError(
+                        err.response?.data?.message ||
+                        "Failed to load dashboard"
+                    );
+
+                } finally {
+
+                    setLoading(false);
 
                 }
 
-
-            } catch (err) {
-
-                console.error(
-                    "Dashboard error:",
-                    err
-                );
-
-                setError(
-                    err.response?.data?.message ||
-                    "Failed to load dashboard"
-                );
-
-            } finally {
-
-                setLoading(false);
-
-            }
-
-        };
+            };
 
 
         loadDashboard();
@@ -123,29 +164,195 @@ function Analytics() {
 
 
     // =========================================================
+    // REAL-TIME SOCKET.IO
+    // =========================================================
+
+    useEffect(() => {
+
+        // =========================================================
+        // SOCKET CONNECTED
+        // =========================================================
+
+        const handleConnect = () => {
+
+            console.log(
+                "Connected to Shoplytics:",
+                socket.id
+            );
+
+        };
+
+
+        // =========================================================
+        // SOCKET DISCONNECTED
+        // =========================================================
+
+        const handleDisconnect = () => {
+
+            console.log(
+                "Disconnected from Shoplytics"
+            );
+
+        };
+
+
+        // =========================================================
+        // REAL-TIME ANALYTICS UPDATE
+        // =========================================================
+
+        const handleAnalyticsUpdate =
+            async (update) => {
+
+                console.log(
+                    "🔥 REAL-TIME UPDATE:",
+                    update
+                );
+
+
+                // =====================================================
+                // ADD EVENT TO LIVE ACTIVITY
+                // =====================================================
+
+                if (
+                    update?.event
+                ) {
+
+                    setLiveEvents(
+                        (previousEvents) => {
+
+                            const newEvents = [
+                                {
+                                    ...update.event,
+                                    liveId:
+                                        Date.now() +
+                                        Math.random()
+                                },
+                                ...previousEvents
+                            ];
+
+
+                            return newEvents.slice(
+                                0,
+                                10
+                            );
+
+                        }
+                    );
+
+                }
+
+
+                // =====================================================
+                // REFRESH ANALYTICS
+                // =====================================================
+
+                try {
+
+                    const response =
+                        await API.get(
+                            "/analytics/dashboard"
+                        );
+
+
+                    if (
+                        response.data.success
+                    ) {
+
+                        setData(
+                            response.data
+                        );
+
+                    }
+
+                } catch (error) {
+
+                    console.error(
+                        "Realtime refresh error:",
+                        error
+                    );
+
+                }
+
+            };
+
+
+        // =========================================================
+        // REGISTER SOCKET EVENTS
+        // =========================================================
+
+        socket.on(
+            "connect",
+            handleConnect
+        );
+
+
+        socket.on(
+            "disconnect",
+            handleDisconnect
+        );
+
+
+        socket.on(
+            "analyticsUpdated",
+            handleAnalyticsUpdate
+        );
+
+
+        // =========================================================
+        // CLEANUP
+        // =========================================================
+
+        return () => {
+
+            socket.off(
+                "connect",
+                handleConnect
+            );
+
+            socket.off(
+                "disconnect",
+                handleDisconnect
+            );
+
+            socket.off(
+                "analyticsUpdated",
+                handleAnalyticsUpdate
+            );
+
+        };
+
+    }, []);
+
+
+    // =========================================================
     // LOGOUT
     // =========================================================
 
-    const handleLogout = async () => {
+    const handleLogout =
+        async () => {
 
-        try {
+            try {
 
-            await API.post(
-                "/auth/logout"
-            );
+                await API.post(
+                    "/auth/logout"
+                );
 
-            navigate("/login");
 
-        } catch (error) {
+                socket.disconnect();
 
-            console.error(
-                "Logout error:",
-                error
-            );
 
-        }
+                navigate("/login");
 
-    };
+            } catch (error) {
+
+                console.error(
+                    "Logout error:",
+                    error
+                );
+
+            }
+
+        };
 
 
     // =========================================================
@@ -203,32 +410,37 @@ function Analytics() {
 
 
     if (!data) {
+
         return null;
+
     }
 
 
-    const analytics =
-        data.analytics;
+    // =========================================================
+    // DATA
+    // =========================================================
 
+    const analytics =
+        data.analytics || {};
 
     const orderStatus =
-        data.orderStatus;
-
+        data.orderStatus || {};
 
     const sales =
         data.sales || [];
 
-
     const orders =
         data.orders || [];
-
 
     const products =
         data.products || [];
 
+    const eventStats =
+        data.eventStats || [];
+
 
     // =========================================================
-    // DASHBOARD
+    // RENDER
     // =========================================================
 
     return (
@@ -243,10 +455,16 @@ function Analytics() {
             <aside className="sidebar">
 
 
+                {/* LOGO */}
+
                 <div className="sidebar-logo">
 
                     <div className="logo-icon">
-                        <BarChart3 size={21} />
+
+                        <BarChart3
+                            size={21}
+                        />
+
                     </div>
 
                     <span>
@@ -256,6 +474,8 @@ function Analytics() {
                 </div>
 
 
+                {/* MAIN MENU */}
+
                 <div className="sidebar-section">
 
                     <p className="sidebar-title">
@@ -263,9 +483,13 @@ function Analytics() {
                     </p>
 
 
-                    <button className="sidebar-item active">
+                    <button
+                        className="sidebar-item active"
+                    >
 
-                        <LayoutDashboard size={18} />
+                        <LayoutDashboard
+                            size={18}
+                        />
 
                         <span>
                             Overview
@@ -274,9 +498,13 @@ function Analytics() {
                     </button>
 
 
-                    <button className="sidebar-item">
+                    <button
+                        className="sidebar-item"
+                    >
 
-                        <BarChart3 size={18} />
+                        <BarChart3
+                            size={18}
+                        />
 
                         <span>
                             Analytics
@@ -285,9 +513,13 @@ function Analytics() {
                     </button>
 
 
-                    <button className="sidebar-item">
+                    <button
+                        className="sidebar-item"
+                    >
 
-                        <ShoppingBag size={18} />
+                        <ShoppingBag
+                            size={18}
+                        />
 
                         <span>
                             Products
@@ -296,9 +528,13 @@ function Analytics() {
                     </button>
 
 
-                    <button className="sidebar-item">
+                    <button
+                        className="sidebar-item"
+                    >
 
-                        <ShoppingCart size={18} />
+                        <ShoppingCart
+                            size={18}
+                        />
 
                         <span>
                             Orders
@@ -307,9 +543,13 @@ function Analytics() {
                     </button>
 
 
-                    <button className="sidebar-item">
+                    <button
+                        className="sidebar-item"
+                    >
 
-                        <Users size={18} />
+                        <Users
+                            size={18}
+                        />
 
                         <span>
                             Customers
@@ -320,12 +560,18 @@ function Analytics() {
                 </div>
 
 
+                {/* BOTTOM */}
+
                 <div className="sidebar-bottom">
 
 
-                    <button className="sidebar-item">
+                    <button
+                        className="sidebar-item"
+                    >
 
-                        <Settings size={18} />
+                        <Settings
+                            size={18}
+                        />
 
                         <span>
                             Settings
@@ -339,7 +585,9 @@ function Analytics() {
                         onClick={handleLogout}
                     >
 
-                        <LogOut size={18} />
+                        <LogOut
+                            size={18}
+                        />
 
                         <span>
                             Logout
@@ -347,20 +595,21 @@ function Analytics() {
 
                     </button>
 
-
                 </div>
 
             </aside>
 
 
             {/* =================================================
-                MAIN
+                MAIN CONTENT
             ================================================= */}
 
             <main className="dashboard-main">
 
 
-                {/* HEADER */}
+                {/* =================================================
+                    HEADER
+                ================================================= */}
 
                 <header className="dashboard-header">
 
@@ -382,16 +631,25 @@ function Analytics() {
                     <div className="header-right">
 
 
-                        <button className="notification">
+                        {/* NOTIFICATION */}
 
-                            <Bell size={19} />
+                        <button
+                            className="notification"
+                        >
+
+                            <Bell
+                                size={19}
+                            />
 
                             <span></span>
 
                         </button>
 
 
+                        {/* USER */}
+
                         <div className="user-profile">
+
 
                             <div className="user-avatar">
 
@@ -406,9 +664,13 @@ function Analytics() {
                             <div className="user-info">
 
                                 <strong>
+
                                     {user?.firstName}
+
                                     {" "}
+
                                     {user?.lastName}
+
                                 </strong>
 
                                 <small>
@@ -441,7 +703,7 @@ function Analytics() {
                     </span>
 
                     <span>
-                        Updated just now
+                        Real-time updates enabled
                     </span>
 
                 </div>
@@ -473,7 +735,7 @@ function Analytics() {
                     <StatCard
                         title="Total Orders"
                         value={
-                            analytics.totalOrders
+                            analytics.totalOrders || 0
                         }
                         growth={
                             analytics.orderGrowth
@@ -489,13 +751,15 @@ function Analytics() {
                     <StatCard
                         title="Customers"
                         value={
-                            analytics.customers
+                            analytics.customers || 0
                         }
                         growth={
                             analytics.customerGrowth
                         }
                         icon={
-                            <Users size={21} />
+                            <Users
+                                size={21}
+                            />
                         }
                     />
 
@@ -503,28 +767,29 @@ function Analytics() {
                     <StatCard
                         title="Products"
                         value={
-                            analytics.products
+                            analytics.products || 0
                         }
                         growth={
                             analytics.productGrowth
                         }
                         icon={
-                            <Package size={21} />
+                            <Package
+                                size={21}
+                            />
                         }
                     />
-
 
                 </section>
 
 
                 {/* =================================================
-                    CHART + ORDER STATUS
+                    SALES + ORDER STATUS
                 ================================================= */}
 
                 <section className="dashboard-grid">
 
 
-                    {/* SALES CHART */}
+                    {/* SALES */}
 
                     <div className="dashboard-card sales-card">
 
@@ -560,6 +825,7 @@ function Analytics() {
 
 
                         <div className="chart-container">
+
 
                             {sales.length > 0 ? (
 
@@ -646,50 +912,168 @@ function Analytics() {
 
                         <div className="status-list">
 
-
                             <StatusRow
                                 label="Delivered"
                                 value={
-                                    orderStatus.delivered
+                                    orderStatus.delivered || 0
                                 }
                             />
-
 
                             <StatusRow
                                 label="Pending"
                                 value={
-                                    orderStatus.pending
+                                    orderStatus.pending || 0
                                 }
                             />
-
 
                             <StatusRow
                                 label="Processing"
                                 value={
-                                    orderStatus.processing
+                                    orderStatus.processing || 0
                                 }
                             />
-
 
                             <StatusRow
                                 label="Cancelled"
                                 value={
-                                    orderStatus.cancelled
+                                    orderStatus.cancelled || 0
                                 }
                             />
 
-
                         </div>
 
-
                     </div>
-
 
                 </section>
 
 
                 {/* =================================================
-                    RECENT ORDERS + TOP PRODUCTS
+                    LIVE ACTIVITY
+                ================================================= */}
+
+                <section className="dashboard-card live-activity-card">
+
+
+                    <div className="card-header">
+
+                        <div>
+
+                            <h3>
+                                Live Activity
+                            </h3>
+
+                            <p>
+                                Real-time customer activity
+                            </p>
+
+                        </div>
+
+
+                        <div className="live-badge">
+
+                            <span className="live-dot"></span>
+
+                            LIVE
+
+                        </div>
+
+                    </div>
+
+
+                    <div className="live-events">
+
+
+                        {liveEvents.length === 0 ? (
+
+                            <div className="empty-state">
+
+                                <Activity
+                                    size={28}
+                                />
+
+                                <p>
+                                    Waiting for live activity...
+                                </p>
+
+                                <small>
+                                    Events will appear here automatically
+                                </small>
+
+                            </div>
+
+                        ) : (
+
+                            liveEvents.map(
+                                (event) => (
+
+                                    <LiveEvent
+                                        key={
+                                            event.liveId
+                                        }
+                                        event={
+                                            event
+                                        }
+                                    />
+
+                                )
+                            )
+
+                        )}
+
+                    </div>
+
+                </section>
+
+
+                {/* =================================================
+                    EVENT STATISTICS
+                ================================================= */}
+
+                <section className="dashboard-card">
+
+
+                    <div className="card-header">
+
+                        <div>
+
+                            <h3>
+                                Customer Activity
+                            </h3>
+
+                            <p>
+                                Event activity from your store
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div className="event-stats-grid">
+
+                        {eventStats.map(
+                            (event) => (
+
+                                <EventStat
+                                    key={
+                                        event._id ||
+                                        "unknown"
+                                    }
+                                    event={
+                                        event
+                                    }
+                                />
+
+                            )
+                        )}
+
+                    </div>
+
+                </section>
+
+
+                {/* =================================================
+                    RECENT ORDERS + PRODUCTS
                 ================================================= */}
 
                 <section className="dashboard-grid">
@@ -714,6 +1098,7 @@ function Analytics() {
 
                             </div>
 
+
                             <button className="view-all">
                                 View all
                             </button>
@@ -732,51 +1117,64 @@ function Analytics() {
 
                             ) : (
 
-                                orders.map((order) => (
+                                orders.map(
+                                    (order) => (
 
-                                    <div
-                                        className="order-row"
-                                        key={order._id}
-                                    >
+                                        <div
+                                            className="order-row"
+                                            key={
+                                                order._id
+                                            }
+                                        >
 
-                                        <div>
+                                            <div>
+
+                                                <strong>
+                                                    {
+                                                        order.orderId
+                                                    }
+                                                </strong>
+
+                                                <small>
+                                                    {
+                                                        order.customerName
+                                                    }
+                                                </small>
+
+                                            </div>
+
 
                                             <strong>
-                                                {order.orderId}
+
+                                                ₹
+                                                {Number(
+                                                    order.totalAmount || 0
+                                                ).toLocaleString(
+                                                    "en-IN"
+                                                )}
+
                                             </strong>
 
-                                            <small>
-                                                {order.customerName}
-                                            </small>
+
+                                            <span
+                                                className={
+                                                    `order-status ${
+                                                        order.status
+                                                            ?.toLowerCase()
+                                                    }`
+                                                }
+                                            >
+
+                                                {
+                                                    order.status
+                                                }
+
+                                            </span>
 
                                         </div>
 
-
-                                        <strong>
-
-                                            ₹
-                                            {Number(
-                                                order.totalAmount
-                                            ).toLocaleString(
-                                                "en-IN"
-                                            )}
-
-                                        </strong>
-
-
-                                        <span
-                                            className={
-                                                `order-status ${order.status
-                                                    ?.toLowerCase()
-                                                }`
-                                            }
-                                        >
-                                            {order.status}
-                                        </span>
-
-                                    </div>
-
-                                ))
+                                    )
+                                )
 
                             )}
 
@@ -819,7 +1217,10 @@ function Analytics() {
                             ) : (
 
                                 products.map(
-                                    (product, index) => (
+                                    (
+                                        product,
+                                        index
+                                    ) => (
 
                                         <div
                                             className="product-row"
@@ -830,7 +1231,9 @@ function Analytics() {
                                         >
 
                                             <div className="product-number">
-                                                {index + 1}
+                                                {
+                                                    index + 1
+                                                }
                                             </div>
 
 
@@ -857,8 +1260,7 @@ function Analytics() {
 
                                                 ₹
                                                 {Number(
-                                                    product.revenue ||
-                                                    0
+                                                    product.revenue || 0
                                                 ).toLocaleString(
                                                     "en-IN"
                                                 )}
@@ -876,7 +1278,6 @@ function Analytics() {
 
                     </div>
 
-
                 </section>
 
 
@@ -889,9 +1290,9 @@ function Analytics() {
 }
 
 
-// =============================================================
+// ============================================================
 // STAT CARD
-// =============================================================
+// ============================================================
 
 function StatCard({
     title,
@@ -907,16 +1308,21 @@ function StatCard({
 
             <div className="stat-top">
 
+
                 <div className="stat-icon">
+
                     {icon}
+
                 </div>
 
 
                 <span className="stat-growth">
 
-                    <TrendingUp size={13} />
+                    <TrendingUp
+                        size={13}
+                    />
 
-                    {growth}%
+                    {growth || 0}%
 
                 </span>
 
@@ -937,7 +1343,6 @@ function StatCard({
                 vs. previous period
             </span>
 
-
         </div>
 
     );
@@ -945,9 +1350,9 @@ function StatCard({
 }
 
 
-// =============================================================
+// ============================================================
 // STATUS ROW
-// =============================================================
+// ============================================================
 
 function StatusRow({
     label,
@@ -958,15 +1363,21 @@ function StatusRow({
 
         <div className="status-row">
 
+
             <div className="status-label">
 
-                <span className={
-                    `status-dot ${label.toLowerCase()}`
-                }></span>
+                <span
+                    className={
+                        `status-dot ${
+                            label.toLowerCase()
+                        }`
+                    }
+                ></span>
 
                 {label}
 
             </div>
+
 
             <strong>
                 {value}
@@ -978,5 +1389,360 @@ function StatusRow({
 
 }
 
+
+// ============================================================
+// LIVE EVENT
+// ============================================================
+
+function LiveEvent({
+    event
+}) {
+
+    const getEventIcon = () => {
+
+        switch (
+            event.type
+        ) {
+
+            case "PRODUCT_VIEWED":
+
+                return (
+                    <Eye size={17} />
+                );
+
+
+            case "PRODUCT_SEARCHED":
+
+                return (
+                    <Search size={17} />
+                );
+
+
+            case "PRODUCT_ADDED_TO_CART":
+
+                return (
+                    <ShoppingCart
+                        size={17}
+                    />
+                );
+
+
+            case "CHECKOUT_STARTED":
+
+                return (
+                    <CreditCard
+                        size={17}
+                    />
+                );
+
+
+            case "PAYMENT_COMPLETED":
+
+                return (
+                    <CircleDollarSign
+                        size={17}
+                    />
+                );
+
+
+            case "ORDER_CREATED":
+
+                return (
+                    <ShoppingBag
+                        size={17}
+                    />
+                );
+
+
+            default:
+
+                return (
+                    <Activity size={17} />
+                );
+
+        }
+
+    };
+
+
+    const getEventText = () => {
+
+        switch (
+            event.type
+        ) {
+
+            case "PRODUCT_VIEWED":
+
+                return (
+                    <>
+                        Someone viewed
+                        {" "}
+                        <strong>
+                            {event.productName}
+                        </strong>
+                    </>
+                );
+
+
+            case "PRODUCT_SEARCHED":
+
+                return (
+                    <>
+                        Product searched:
+                        {" "}
+                        <strong>
+                            {event.productName}
+                        </strong>
+                    </>
+                );
+
+
+            case "PRODUCT_ADDED_TO_CART":
+
+                return (
+                    <>
+                        Product added to cart:
+                        {" "}
+                        <strong>
+                            {event.productName}
+                        </strong>
+                    </>
+                );
+
+
+            case "CHECKOUT_STARTED":
+
+                return (
+                    <>
+                        Checkout started for
+                        {" "}
+                        <strong>
+                            {event.productName}
+                        </strong>
+                    </>
+                );
+
+
+            case "PAYMENT_COMPLETED":
+
+                return (
+                    <>
+                        Payment completed for
+                        {" "}
+                        <strong>
+                            {event.orderId}
+                        </strong>
+                    </>
+                );
+
+
+            case "ORDER_CREATED":
+
+                return (
+                    <>
+                        New order created:
+                        {" "}
+                        <strong>
+                            {event.orderId}
+                        </strong>
+                    </>
+                );
+
+
+            default:
+
+                return (
+                    <>
+                        New activity:
+                        {" "}
+                        <strong>
+                            {event.type}
+                        </strong>
+                    </>
+                );
+
+        }
+
+    };
+
+
+    return (
+
+        <div className="live-event-row">
+
+
+            <div className="live-event-icon">
+
+                {getEventIcon()}
+
+            </div>
+
+
+            <div className="live-event-content">
+
+                <p>
+                    {getEventText()}
+                </p>
+
+                <small>
+                    Just now
+                </small>
+
+            </div>
+
+
+            {event.amount && (
+
+                <strong className="live-event-amount">
+
+                    ₹
+                    {Number(
+                        event.amount
+                    ).toLocaleString(
+                        "en-IN"
+                    )}
+
+                </strong>
+
+            )}
+
+        </div>
+
+    );
+
+}
+
+
+// ============================================================
+// EVENT STAT
+// ============================================================
+
+function EventStat({
+    event
+}) {
+
+    let icon = (
+        <Activity size={18} />
+    );
+
+
+    if (
+        event._id ===
+        "PRODUCT_VIEWED"
+    ) {
+
+        icon = (
+            <Eye size={18} />
+        );
+
+    }
+
+
+    if (
+        event._id ===
+        "PRODUCT_SEARCHED"
+    ) {
+
+        icon = (
+            <Search size={18} />
+        );
+
+    }
+
+
+    if (
+        event._id ===
+        "PRODUCT_ADDED_TO_CART"
+    ) {
+
+        icon = (
+            <ShoppingCart
+                size={18}
+            />
+        );
+
+    }
+
+
+    if (
+        event._id ===
+        "CHECKOUT_STARTED"
+    ) {
+
+        icon = (
+            <CreditCard
+                size={18}
+            />
+        );
+
+    }
+
+
+    return (
+
+        <div className="event-stat">
+
+
+            <div className="event-stat-icon">
+
+                {icon}
+
+            </div>
+
+
+            <div>
+
+                <strong>
+                    {event.count}
+                </strong>
+
+                <p>
+                    {formatEventName(
+                        event._id
+                    )}
+                </p>
+
+            </div>
+
+        </div>
+
+    );
+
+}
+
+
+// ============================================================
+// FORMAT EVENT NAME
+// ============================================================
+
+function formatEventName(
+    eventName
+) {
+
+    if (!eventName) {
+
+        return "Unknown";
+
+    }
+
+
+    return eventName
+        .replaceAll(
+            "_",
+            " "
+        )
+        .toLowerCase()
+        .replace(
+            /\b\w/g,
+            (letter) =>
+                letter.toUpperCase()
+        );
+
+}
+
+
+// ============================================================
+// EXPORT
+// ============================================================
 
 export default Analytics;
