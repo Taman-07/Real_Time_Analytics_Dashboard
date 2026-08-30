@@ -1,766 +1,563 @@
+// ============================================================
+// SHOPLYTICS - ANALYTICS CONTROLLER
+// ============================================================
+
 import Event from "../models/Event.js";
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 
 
 // ============================================================
-// CREATE EVENT
+// DASHBOARD ANALYTICS
 // ============================================================
 
-export const createEvent = async (req, res) => {
+export const getDashboardAnalytics = async (req, res) => {
 
     try {
 
-        const {
-            type,
-            productId,
-            productName,
-            userId,
-            orderId,
-            amount,
-            category,
-            metadata
-        } = req.body;
+        // ====================================================
+        // EVENTS
+        // ====================================================
+
+        const totalEvents =
+            await Event.countDocuments();
 
 
-        if (!type) {
+        // ====================================================
+        // ORDERS
+        // ====================================================
 
-            return res.status(400).json({
-                success: false,
-                message:
-                    "Event type is required"
-            });
-        }
-
-
-        const event =
-            await Event.create({
-
-                type,
-
-                productId,
-
-                productName,
-
-                userId,
-
-                orderId,
-
-                amount,
-
-                category,
-
-                metadata
-            });
+        const orders =
+            await Order
+                .find()
+                .sort({
+                    createdAt: -1
+                })
+                .limit(20)
+                .lean();
 
 
-        if (req.io) {
+        const totalOrders =
+            await Order.countDocuments();
 
-            req.io.emit(
-                "liveEvent",
+
+        // ====================================================
+        // REVENUE
+        // ONLY PAID ORDERS
+        // ====================================================
+
+        const revenueResult =
+            await Order.aggregate([
+
                 {
-                    event
+                    $match: {
+
+                        paymentStatus:
+                            "Paid"
+
+                    }
+
+                },
+
+                {
+
+                    $group: {
+
+                        _id:
+                            null,
+
+                        total: {
+
+                            $sum:
+                                "$totalAmount"
+
+                        }
+
+                    }
+
                 }
+
+            ]);
+
+
+        const revenue =
+            revenueResult.length > 0
+                ? revenueResult[0].total
+                : 0;
+
+
+        // ====================================================
+        // CUSTOMERS
+        // ====================================================
+
+        const customerResult =
+            await Order.aggregate([
+
+                {
+
+                    $group: {
+
+                        _id:
+                            "$customerEmail"
+
+                    }
+
+                },
+
+                {
+
+                    $count:
+                        "count"
+
+                }
+
+            ]);
+
+
+        const customers =
+            customerResult.length > 0
+                ? customerResult[0].count
+                : 0;
+
+
+        // ====================================================
+        // PRODUCTS
+        // ====================================================
+
+        const productCount =
+            await Product.countDocuments();
+
+
+        // ====================================================
+        // ORDER STATUS
+        // ====================================================
+
+        const delivered =
+            await Order.countDocuments({
+
+                status:
+                    "Delivered"
+
+            });
+
+
+        const pending =
+            await Order.countDocuments({
+
+                status:
+                    "Pending"
+
+            });
+
+
+        const processing =
+            await Order.countDocuments({
+
+                status:
+                    "Processing"
+
+            });
+
+
+        const cancelled =
+            await Order.countDocuments({
+
+                status:
+                    "Cancelled"
+
+            });
+
+
+        // ====================================================
+        // SALES BY DATE
+        // ONLY PAID ORDERS
+        // ====================================================
+
+        const salesResult =
+            await Order.aggregate([
+
+                {
+
+                    $match: {
+
+                        paymentStatus:
+                            "Paid"
+
+                    }
+
+                },
+
+                {
+
+                    $group: {
+
+                        _id: {
+
+                            $dateToString: {
+
+                                format:
+                                    "%Y-%m-%d",
+
+                                date:
+                                    "$createdAt"
+
+                            }
+
+                        },
+
+                        sales: {
+
+                            $sum:
+                                "$totalAmount"
+
+                        },
+
+                        orders: {
+
+                            $sum:
+                                1
+
+                        }
+
+                    }
+
+                },
+
+                {
+
+                    $sort: {
+
+                        _id:
+                            1
+
+                    }
+
+                }
+
+            ]);
+
+
+        const sales =
+            salesResult.map(
+                (item) => ({
+
+                    name:
+                        item._id,
+
+                    sales:
+                        Number(
+                            item.sales || 0
+                        ),
+
+                    orders:
+                        Number(
+                            item.orders || 0
+                        )
+
+                })
             );
-        }
 
 
-        res.status(201).json({
+        // ====================================================
+        // TOP PRODUCTS
+        // ====================================================
 
-            success: true,
+        const productSalesResult =
+            await Order.aggregate([
 
-            event
+                {
+
+                    $match: {
+
+                        paymentStatus:
+                            "Paid"
+
+                    }
+
+                },
+
+                {
+
+                    $unwind:
+                        "$products"
+
+                },
+
+                {
+
+                    $group: {
+
+                        _id:
+                            "$products.productId",
+
+                        productName: {
+
+                            $first:
+                                "$products.productName"
+
+                        },
+
+                        sales: {
+
+                            $sum:
+                                "$products.quantity"
+
+                        },
+
+                        revenue: {
+
+                            $sum: {
+
+                                $multiply: [
+
+                                    "$products.quantity",
+
+                                    "$products.price"
+
+                                ]
+
+                            }
+
+                        }
+
+                    }
+
+                },
+
+                {
+
+                    $sort: {
+
+                        sales:
+                            -1
+
+                    }
+
+                },
+
+                {
+
+                    $limit:
+                        10
+
+                }
+
+            ]);
+
+
+        const topProducts =
+            productSalesResult.map(
+                (product) => ({
+
+                    productId:
+                        product._id,
+
+                    productName:
+                        product.productName ||
+                        "Unknown Product",
+
+                    sales:
+                        Number(
+                            product.sales || 0
+                        ),
+
+                    revenue:
+                        Number(
+                            product.revenue || 0
+                        )
+
+                })
+            );
+
+
+        // ====================================================
+        // GROWTH
+        // ====================================================
+
+        const orderGrowth =
+            8.4;
+
+        const revenueGrowth =
+            12.6;
+
+        const customerGrowth =
+            14.2;
+
+        const productGrowth =
+            5.2;
+
+
+        // ====================================================
+        // EVENT STATISTICS
+        // ====================================================
+
+        const eventStats =
+            await Event.aggregate([
+
+                {
+
+                    $group: {
+
+                        _id:
+                            "$type",
+
+                        count: {
+
+                            $sum:
+                                1
+
+                        }
+
+                    }
+
+                },
+
+                {
+
+                    $sort: {
+
+                        count:
+                            -1
+
+                    }
+
+                }
+
+            ]);
+
+
+        // ====================================================
+        // RESPONSE
+        // ====================================================
+
+        res.json({
+
+            success:
+                true,
+
+            analytics: {
+
+                totalEvents,
+
+                totalOrders,
+
+                revenue,
+
+                customers,
+
+                products:
+                    productCount,
+
+                orderGrowth,
+
+                revenueGrowth,
+
+                customerGrowth,
+
+                productGrowth
+
+            },
+
+            orderStatus: {
+
+                delivered,
+
+                pending,
+
+                processing,
+
+                cancelled
+
+            },
+
+            eventStats,
+
+            sales,
+
+            orders,
+
+            products:
+                topProducts
+
         });
 
     } catch (error) {
 
         console.error(
-            "Create event error:",
+            "Analytics dashboard error:",
             error
         );
 
+
         res.status(500).json({
 
-            success: false,
+            success:
+                false,
 
             message:
-                "Failed to create analytics event"
+                "Failed to load analytics",
+
+            error:
+                error.message
+
         });
+
     }
+
 };
 
 
 // ============================================================
-// GET DASHBOARD
+// GET ALL PRODUCTS
 // ============================================================
 
-export const getDashboardAnalytics =
-    async (req, res) => {
+export const getProducts = async (req, res) => {
 
-        try {
+    try {
 
-            const totalEvents =
-                await Event.countDocuments();
+        const products =
+            await Product
+                .find()
+                .sort({
+                    createdAt:
+                        -1
+                })
+                .lean();
 
 
-            const totalOrders =
-                await Order.countDocuments();
+        res.json({
 
+            success:
+                true,
 
-            const totalProducts =
-                await Product.countDocuments();
+            count:
+                products.length,
 
+            products
 
-            const deliveredOrders =
-                await Order.countDocuments({
-                    status: "Delivered"
-                });
+        });
 
+    } catch (error) {
 
-            const pendingOrders =
-                await Order.countDocuments({
-                    status: "Pending"
-                });
+        console.error(
+            "Get products error:",
+            error
+        );
 
 
-            const processingOrders =
-                await Order.countDocuments({
-                    status: "Processing"
-                });
+        res.status(500).json({
 
+            success:
+                false,
 
-            const cancelledOrders =
-                await Order.countDocuments({
-                    status: "Cancelled"
-                });
+            message:
+                "Failed to fetch products",
 
+            error:
+                error.message
 
-            const revenueResult =
-                await Order.aggregate([
+        });
 
-                    {
-                        $match: {
-                            paymentStatus:
-                                "Paid"
-                        }
-                    },
+    }
 
-                    {
-                        $group: {
-
-                            _id: null,
-
-                            total: {
-                                $sum:
-                                    "$totalAmount"
-                            }
-                        }
-                    }
-                ]);
-
-
-            const revenue =
-                revenueResult[0]?.total || 0;
-
-
-            const customers =
-                await Event.distinct(
-                    "userId",
-                    {
-                        userId: {
-                            $ne: null
-                        }
-                    }
-                );
-
-
-            const eventStats =
-                await Event.aggregate([
-
-                    {
-                        $match: {
-                            type: {
-                                $ne: null
-                            }
-                        }
-                    },
-
-                    {
-                        $group: {
-
-                            _id: "$type",
-
-                            count: {
-                                $sum: 1
-                            }
-                        }
-                    },
-
-                    {
-                        $sort: {
-                            count: -1
-                        }
-                    }
-                ]);
-
-
-            const sales =
-                await Order.aggregate([
-
-                    {
-                        $match: {
-                            paymentStatus:
-                                "Paid"
-                        }
-                    },
-
-                    {
-                        $group: {
-
-                            _id: {
-                                $dateToString: {
-
-                                    format:
-                                        "%Y-%m-%d",
-
-                                    date:
-                                        "$createdAt"
-                                }
-                            },
-
-                            sales: {
-                                $sum:
-                                    "$totalAmount"
-                            },
-
-                            orders: {
-                                $sum: 1
-                            }
-                        }
-                    },
-
-                    {
-                        $sort: {
-                            _id: 1
-                        }
-                    }
-                ]);
-
-
-            const recentOrders =
-                await Order.find()
-                    .sort({
-                        createdAt: -1
-                    })
-                    .limit(10)
-                    .lean();
-
-
-            const topProducts =
-                await Event.aggregate([
-
-                    {
-                        $match: {
-                            type:
-                                "PAYMENT_COMPLETED"
-                        }
-                    },
-
-                    {
-                        $group: {
-
-                            _id:
-                                "$productId",
-
-                            productName: {
-                                $first:
-                                    "$productName"
-                            },
-
-                            sales: {
-                                $sum: 1
-                            },
-
-                            revenue: {
-                                $sum:
-                                    "$amount"
-                            }
-                        }
-                    },
-
-                    {
-                        $sort: {
-                            sales: -1
-                        }
-                    },
-
-                    {
-                        $limit: 5
-                    }
-                ]);
-
-
-            res.json({
-
-                success: true,
-
-                analytics: {
-
-                    totalEvents,
-
-                    totalOrders,
-
-                    revenue,
-
-                    customers:
-                        customers.length,
-
-                    products:
-                        totalProducts,
-
-                    orderGrowth: 8.4,
-
-                    revenueGrowth: 12.6,
-
-                    customerGrowth: 14.2,
-
-                    productGrowth: 5.2
-                },
-
-
-                orderStatus: {
-
-                    delivered:
-                        deliveredOrders,
-
-                    pending:
-                        pendingOrders,
-
-                    processing:
-                        processingOrders,
-
-                    cancelled:
-                        cancelledOrders
-                },
-
-
-                eventStats,
-
-
-                sales:
-                    sales.map(
-                        item => ({
-
-                            name:
-                                item._id,
-
-                            sales:
-                                item.sales,
-
-                            orders:
-                                item.orders
-                        })
-                    ),
-
-
-                orders:
-                    recentOrders,
-
-
-                products:
-                    topProducts
-            });
-
-        } catch (error) {
-
-            console.error(
-                "Dashboard analytics error:",
-                error
-            );
-
-            res.status(500).json({
-
-                success: false,
-
-                message:
-                    "Failed to fetch dashboard analytics"
-            });
-        }
-    };
-
-
-// ============================================================
-// RECENT EVENTS
-// ============================================================
-
-export const getRecentEvents =
-    async (req, res) => {
-
-        try {
-
-            const events =
-                await Event.find()
-                    .sort({
-                        createdAt: -1
-                    })
-                    .limit(20)
-                    .lean();
-
-
-            res.json({
-
-                success: true,
-
-                events
-            });
-
-        } catch (error) {
-
-            res.status(500).json({
-
-                success: false,
-
-                message:
-                    "Failed to fetch events"
-            });
-        }
-    };
-
-
-// ============================================================
-// CREATE PRODUCT
-// ============================================================
-
-export const createProduct =
-    async (req, res) => {
-
-        try {
-
-            const {
-                externalId,
-                title,
-                price,
-                category,
-                thumbnail,
-                brand,
-                stock
-            } = req.body;
-
-
-            const product =
-                await Product.create({
-
-                    externalId,
-
-                    title,
-
-                    price,
-
-                    category,
-
-                    thumbnail,
-
-                    brand,
-
-                    stock
-                });
-
-
-            if (req.io) {
-
-                req.io.emit(
-                    "productsUpdated",
-                    {
-                        product
-                    }
-                );
-            }
-
-
-            res.status(201).json({
-
-                success: true,
-
-                message:
-                    "Product created successfully",
-
-                product
-            });
-
-        } catch (error) {
-
-            console.error(
-                "Create product error:",
-                error
-            );
-
-
-            res.status(500).json({
-
-                success: false,
-
-                message:
-                    error.message,
-
-                error:
-                    error.name
-            });
-        }
-    };
-
-
-// ============================================================
-// CREATE ORDER
-// ============================================================
-
-export const createOrder =
-    async (req, res) => {
-
-        try {
-
-            const {
-                customerName,
-                customerEmail,
-                products,
-                totalAmount
-            } = req.body;
-
-
-            if (
-                !customerName ||
-                !customerEmail ||
-                !products?.length ||
-                !totalAmount
-            ) {
-
-                return res.status(400).json({
-
-                    success: false,
-
-                    message:
-                        "Customer, email, products and total amount are required"
-                });
-            }
-
-
-            const orderId =
-                `ORD-${Date.now()}`;
-
-
-            const order =
-                await Order.create({
-
-                    orderId,
-
-                    customerName,
-
-                    customerEmail,
-
-                    products,
-
-                    totalAmount,
-
-                    status:
-                        "Pending",
-
-                    paymentStatus:
-                        "Pending"
-                });
-
-
-            const event =
-                await Event.create({
-
-                    type:
-                        "ORDER_CREATED",
-
-                    orderId,
-
-                    userId:
-                        customerEmail,
-
-                    amount:
-                        totalAmount,
-
-                    metadata: {
-                        customerName
-                    }
-                });
-
-
-            if (req.io) {
-
-                req.io.emit(
-                    "liveOrder",
-                    {
-                        order,
-                        event
-                    }
-                );
-
-                req.io.emit(
-                    "liveEvent",
-                    {
-                        event
-                    }
-                );
-            }
-
-
-            res.status(201).json({
-
-                success: true,
-
-                order
-            });
-
-        } catch (error) {
-
-            console.error(
-                "Create order error:",
-                error
-            );
-
-
-            res.status(500).json({
-
-                success: false,
-
-                message:
-                    "Failed to create order"
-            });
-        }
-    };
-
-
-// ============================================================
-// UPDATE ORDER STATUS
-// ============================================================
-
-export const updateOrderStatus =
-    async (req, res) => {
-
-        try {
-
-            const {
-                orderId
-            } = req.params;
-
-
-            const {
-                status
-            } = req.body;
-
-
-            const order =
-                await Order.findOneAndUpdate(
-
-                    {
-                        orderId
-                    },
-
-                    {
-                        status
-                    },
-
-                    {
-                        new: true
-                    }
-                );
-
-
-            if (!order) {
-
-                return res.status(404).json({
-
-                    success: false,
-
-                    message:
-                        "Order not found"
-                });
-            }
-
-
-            if (
-                status ===
-                "Delivered"
-            ) {
-
-                order.paymentStatus =
-                    "Paid";
-
-                await order.save();
-
-
-                await Event.create({
-
-                    type:
-                        "PAYMENT_COMPLETED",
-
-                    orderId,
-
-                    amount:
-                        order.totalAmount,
-
-                    metadata: {
-
-                        customer:
-                            order.customerName
-                    }
-                });
-            }
-
-
-            if (
-                status ===
-                "Cancelled"
-            ) {
-
-                await Event.create({
-
-                    type:
-                        "ORDER_CANCELLED",
-
-                    orderId,
-
-                    amount:
-                        order.totalAmount
-                });
-            }
-
-
-            if (req.io) {
-
-                req.io.emit(
-                    "orderUpdated",
-                    {
-                        order
-                    }
-                );
-            }
-
-
-            res.json({
-
-                success: true,
-
-                order
-            });
-
-        } catch (error) {
-
-            console.error(
-                "Update order error:",
-                error
-            );
-
-
-            res.status(500).json({
-
-                success: false,
-
-                message:
-                    "Failed to update order"
-            });
-        }
-    };
+};

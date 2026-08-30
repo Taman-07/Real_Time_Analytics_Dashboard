@@ -1,49 +1,139 @@
+// ============================================================
+// SHOPLYTICS - ORDER MODEL
+// ============================================================
+
 import mongoose from "mongoose";
 
-const productSchema = new mongoose.Schema(
+
+// ============================================================
+// ORDER PRODUCT SCHEMA
+// ============================================================
+
+const orderProductSchema = new mongoose.Schema(
     {
-        externalId: {
+        productId: {
             type: Number,
-            required: true,
-            unique: true
+            required: true
         },
 
-        title: {
+        productName: {
             type: String,
             required: true
+        },
+
+        quantity: {
+            type: Number,
+            required: true,
+            default: 1
         },
 
         price: {
             type: Number,
             required: true
-        },
+        }
+    }
+);
 
-        category: {
+
+// ============================================================
+// ORDER SCHEMA
+// ============================================================
+
+const orderSchema = new mongoose.Schema(
+    {
+        // ----------------------------------------------------
+        // ORDER ID
+        // ----------------------------------------------------
+
+        orderId: {
             type: String,
-            default: "Other"
+            required: true,
+            unique: true
         },
 
-        thumbnail: {
+
+        // ----------------------------------------------------
+        // CUSTOMER
+        // ----------------------------------------------------
+
+        customerName: {
             type: String,
-            default: ""
+            required: true
         },
 
-        brand: {
+        customerEmail: {
             type: String,
-            default: ""
+            required: true
         },
 
-        stock: {
+
+        // ----------------------------------------------------
+        // PRODUCTS
+        // ----------------------------------------------------
+
+        products: {
+            type: [orderProductSchema],
+            required: true
+        },
+
+
+        // ----------------------------------------------------
+        // TOTAL
+        // ----------------------------------------------------
+
+        totalAmount: {
             type: Number,
+            required: true,
             default: 0
+        },
+
+
+        // ----------------------------------------------------
+        // ORDER STATUS
+        // ----------------------------------------------------
+
+        status: {
+            type: String,
+
+            enum: [
+                "Pending",
+                "Processing",
+                "Delivered",
+                "Cancelled"
+            ],
+
+            default: "Pending"
+        },
+
+
+        // ----------------------------------------------------
+        // PAYMENT STATUS
+        // ----------------------------------------------------
+
+        paymentStatus: {
+            type: String,
+
+            enum: [
+                "Pending",
+                "Paid",
+                "Failed"
+            ],
+
+            default: "Pending"
         }
     },
+
     {
         timestamps: true
     }
 );
 
+
+// ============================================================
+// EXPORT
+// ============================================================
+
 export default mongoose.model(
-    "Product",
-    productSchema
+    "Order",
+    orderSchema
 );

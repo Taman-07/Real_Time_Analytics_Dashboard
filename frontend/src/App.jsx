@@ -18,52 +18,44 @@ function App() {
 
             <Routes>
 
-                {/* Default */}
-
                 <Route
                     path="/"
                     element={
                         <Navigate
                             to="/login"
-                            replace
                         />
                     }
                 />
-
-
-                {/* Authentication */}
 
                 <Route
                     path="/login"
-                    element={<Login />}
+                    element={
+                        <Login />
+                    }
                 />
-
 
                 <Route
                     path="/signup"
-                    element={<Signup />}
+                    element={
+                        <Signup />
+                    }
                 />
-
-
-                {/* Analytics */}
 
                 <Route
                     path="/analytics"
-                    element={<Analytics />}
+                    element={
+                        <Analytics />
+                    }
                 />
 
-
-                {/* Unknown URL */}
-
-                <Route
+                {/* <Route
                     path="*"
                     element={
                         <Navigate
-                            to="/login"
-                            replace
+                            to="/analytics"
                         />
                     }
-                />
+                /> */}
 
             </Routes>
 
