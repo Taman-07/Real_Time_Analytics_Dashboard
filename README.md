@@ -1,23 +1,27 @@
 # Real-Time Analytics Dashboard
 
+<h3 align="center">
+  A full-stack real-time analytics platform for tracking application activity,
+  monitoring events, and visualizing insights through an interactive dashboard.
+</h3>
+
 <p align="center">
-  A full-stack analytics platform for tracking document activity and delivering insights in real time.
+  REST APIs • MongoDB • Socket.IO • React • Recharts
 </p>
 
 <p align="center">
-  <strong>REST APIs for data. Socket.IO for real-time updates. React for visualization.</strong>
-</p>
 
-<br>
+<img src="https://img.shields.io/badge/Node.js-Backend-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js"/>
 
-<p align="center">
+<img src="https://img.shields.io/badge/Express.js-API-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express.js"/>
 
-![Node.js](https://img.shields.io/badge/Node.js-Backend-339933?style=flat-square\&logo=node.js\&logoColor=white)
-![Express.js](https://img.shields.io/badge/Express.js-API-000000?style=flat-square\&logo=express\&logoColor=white)
-![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=flat-square\&logo=mongodb\&logoColor=white)
-![Socket.IO](https://img.shields.io/badge/Socket.IO-Realtime-010101?style=flat-square\&logo=socket.io\&logoColor=white)
-![React](https://img.shields.io/badge/React-Frontend-61DAFB?style=flat-square\&logo=react\&logoColor=black)
-![Recharts](https://img.shields.io/badge/Recharts-Visualization-8884D8?style=flat-square)
+<img src="https://img.shields.io/badge/MongoDB-Database-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB"/>
+
+<img src="https://img.shields.io/badge/Socket.IO-Realtime-010101?style=for-the-badge&logo=socket.io&logoColor=white" alt="Socket.IO"/>
+
+<img src="https://img.shields.io/badge/React-Frontend-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React"/>
+
+<img src="https://img.shields.io/badge/Recharts-Visualization-8884D8?style=for-the-badge" alt="Recharts"/>
 
 </p>
 
@@ -25,19 +29,219 @@
 
 ## Overview
 
-**Real-Time Analytics Dashboard** is a MERN-based analytics application built to collect, store, process, and visualize application events in real time.
+**Real-Time Analytics Dashboard** is a full-stack analytics application built using the MERN stack.
 
-The system tracks activity associated with individual documents and provides live analytics through a React dashboard.
+The platform collects application events, stores them in MongoDB, processes analytics, and displays the results through an interactive React dashboard.
 
-Instead of repeatedly requesting updated data, the application uses **Socket.IO** to push changes directly to connected clients whenever a new event occurs.
+The main focus of this project is **real-time data communication**. Instead of repeatedly requesting updated information from the backend, the application uses **Socket.IO** to instantly push analytics updates to connected clients.
 
 > **REST APIs handle the data. WebSockets deliver it instantly.**
 
+The project demonstrates how modern web applications can combine:
+
+* REST APIs
+* MongoDB
+* Express.js
+* React
+* Socket.IO
+* Event-driven architecture
+* Real-time data processing
+* Data visualization
+
 ---
 
-## What It Does
+# Features
 
-The application follows a simple event-driven workflow:
+### Real-Time Analytics
+
+Analytics update instantly whenever a new event is generated.
+
+The dashboard does not require a manual page refresh because updates are delivered through **Socket.IO**.
+
+---
+
+### Document Analytics
+
+Activity can be tracked independently for individual documents.
+
+Each document can have its own collection of events and analytics.
+
+Example:
+
+```text
+Document A
+ ├── Views
+ ├── Opens
+ ├── Edits
+ └── Downloads
+```
+
+---
+
+### Event Tracking
+
+The application supports multiple event types:
+
+```text
+VIEW
+OPEN
+EDIT
+DOWNLOAD
+```
+
+Each event can contain information such as:
+
+* Document
+* User
+* Event type
+* Metadata
+* Timestamp
+
+---
+
+### Live Event Feed
+
+New events appear on the dashboard as soon as they are generated.
+
+Example:
+
+```text
+VIEW       user123       Document A
+EDIT       user456       Document B
+DOWNLOAD   user789       Document C
+```
+
+---
+
+### Analytics Overview
+
+The dashboard provides important metrics such as:
+
+* Total Events
+* Total Documents
+* Total Views
+* Total Opens
+* Total Edits
+* Total Downloads
+
+---
+
+### Interactive Charts
+
+Analytics data is visualized using **Recharts**.
+
+The dashboard can display:
+
+* Event activity
+* Event distribution
+* Document activity
+* Event trends
+* Usage statistics
+
+---
+
+### REST API
+
+The backend provides REST endpoints for:
+
+* Documents
+* Events
+* Analytics
+
+---
+
+### MongoDB Atlas
+
+MongoDB Atlas is used as the cloud database for storing:
+
+* Documents
+* Events
+* Analytics-related information
+
+---
+
+# Dashboard Preview
+
+The dashboard provides a centralized view of application activity.
+
+It combines analytics cards, charts, document information, and live events in a single interface.
+
+---
+
+# Application Screenshots
+
+## Analytics Dashboard
+
+<p align="center">
+  <img src="screenshots/dashboard.png" alt="Analytics Dashboard" width="900"/>
+</p>
+
+The main dashboard provides an overview of application activity and important analytics metrics.
+
+It allows users to quickly monitor the current state of their application.
+
+---
+
+## Analytics Visualization
+
+<p align="center">
+  <img src="screenshots/analytics.png" alt="Analytics Charts" width="900"/>
+</p>
+
+Interactive charts provide a visual representation of event activity and document usage.
+
+The visualization makes it easier to identify patterns and understand application activity.
+
+---
+
+## Live Events
+
+<p align="center">
+  <img src="screenshots/live-events.png" alt="Live Events Feed" width="900"/>
+</p>
+
+The live event feed displays newly generated events without requiring a page refresh.
+
+This demonstrates the real-time communication capabilities of the application.
+
+---
+
+### Architecture Flow
+
+```text
+                    ┌──────────────────┐
+                    │      React       │
+                    │    Dashboard     │
+                    └────────┬─────────┘
+                             │
+                    REST API │ Socket.IO
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │     Express      │
+                    │      Server      │
+                    └────────┬─────────┘
+                             │
+                  ┌──────────┴──────────┐
+                  │                     │
+                  ▼                     ▼
+          ┌──────────────┐      ┌──────────────┐
+          │   MongoDB    │      │   Analytics  │
+          │     Atlas    │      │   Processing │
+          └──────────────┘      └───────┬──────┘
+                                        │
+                                        ▼
+                                  Socket.IO
+                                        │
+                                        ▼
+                              Connected Clients
+```
+
+---
+
+# Application Workflow
+
+The application follows this workflow:
 
 ```text
 User Activity
@@ -49,13 +253,13 @@ Event Generated
 Express REST API
       │
       ▼
-MongoDB Atlas
+MongoDB
       │
       ▼
-Analytics Updated
+Analytics Processed
       │
       ▼
-Socket.IO
+Socket.IO Broadcast
       │
       ▼
 React Dashboard
@@ -64,264 +268,149 @@ React Dashboard
 Live Insights
 ```
 
-This allows analytics to update without manually refreshing the page.
+This architecture allows the dashboard to continuously display updated information.
 
 ---
 
-## Features
+# Real-Time Data Flow
 
-### Real-Time Analytics
-
-View application activity as it happens with live updates powered by Socket.IO.
-
-### Document Analytics
-
-Track activity independently for each document.
-
-### Event Logging
-
-Record events such as:
+When a new event is generated, the following process takes place:
 
 ```text
-view
-open
-edit
-download
+1. User performs an action
+              │
+              ▼
+2. Frontend sends event
+              │
+              ▼
+3. Express API receives event
+              │
+              ▼
+4. Event is stored in MongoDB
+              │
+              ▼
+5. Analytics are processed
+              │
+              ▼
+6. Socket.IO broadcasts update
+              │
+              ▼
+7. React receives update
+              │
+              ▼
+8. Dashboard updates instantly
 ```
 
-Each event can contain document information, user information, metadata, and timestamps.
-
-### Live Event Feed
-
-New events appear instantly on the dashboard when they are generated.
-
-### Analytics Overview
-
-Monitor key metrics including:
-
-* Total events
-* Total documents
-* Views
-* Opens
-* Edits
-* Downloads
-
-### Interactive Visualization
-
-Analytics data is presented through charts and visual components using **Recharts**.
-
-### REST API
-
-The backend provides structured endpoints for managing documents, events, and analytics.
-
-### Cloud Database
-
-MongoDB Atlas provides persistent cloud storage for application data and event records.
+This eliminates the need for continuous polling and provides a responsive real-time experience.
 
 ---
 
-## Tech Stack
+# Socket.IO Integration
 
-| Technology        | Role                    |
-| ----------------- | ----------------------- |
-| **React**         | Dashboard interface     |
-| **Node.js**       | Backend runtime         |
-| **Express.js**    | REST API                |
-| **MongoDB Atlas** | Database                |
-| **Mongoose**      | Database modeling       |
-| **Socket.IO**     | Real-time communication |
-| **Axios**         | API requests            |
-| **Recharts**      | Data visualization      |
-| **Lucide React**  | Interface icons         |
+The application uses Socket.IO to broadcast analytics updates to connected clients.
 
----
-
-## Dashboard
-
-The React dashboard provides a centralized view of application activity.
-
-```text
-┌─────────────────────────────────────────────────────────┐
-│                 REAL-TIME ANALYTICS                     │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  Total Events    Documents      Views       Edits      │
-│      1284           42           892         231       │
-│                                                         │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│                 Events Activity                         │
-│                                                         │
-│       ╱╲          ╱╲                                    │
-│   ╱╲╱  ╲╱╲    ╱╲╱  ╲                                   │
-│                                                         │
-├────────────────────────┬────────────────────────────────┤
-│       Documents         │        Live Events             │
-│                         │                                │
-│   Document A            │   VIEW     user123             │
-│   Document B            │   EDIT     user456             │
-│   Document C            │   OPEN     user789             │
-│                         │                                │
-└────────────────────────┴────────────────────────────────┘
-```
-
----
-
-## Real-Time Architecture
-
-When an event is created, the server stores it in MongoDB and broadcasts the updated analytics to all connected clients.
-
-```text
-                    ┌──────────────┐
-                    │    React     │
-                    │  Dashboard   │
-                    └──────┬───────┘
-                           │
-                     Socket.IO
-                           │
-                           ▼
-                    ┌──────────────┐
-                    │   Express    │
-                    │    Server    │
-                    └──────┬───────┘
-                           │
-                 ┌─────────┴─────────┐
-                 │                   │
-                 ▼                   ▼
-          ┌─────────────┐     ┌─────────────┐
-          │  MongoDB    │     │  Analytics  │
-          │    Atlas    │     │   Updates   │
-          └─────────────┘     └──────┬──────┘
-                                     │
-                                     ▼
-                               Socket.IO
-                                     │
-                                     ▼
-                              Connected Clients
-```
-
----
-
-## API Endpoints
-
-### Server
-
-```http
-GET /
-```
-
-Returns the backend status.
-
-### Documents
-
-```http
-POST /api/analytics/documents
-GET  /api/analytics/documents
-```
-
-Create and retrieve documents.
-
-### Events
-
-```http
-POST /api/analytics/events
-GET  /api/analytics/events
-```
-
-Create and retrieve analytics events.
-
-### Analytics
-
-```http
-GET /api/analytics/analytics
-```
-
-Returns the current analytics summary.
-
----
-
-## Real-Time Events
-
-The application uses the following Socket.IO event:
-
-```text
-analyticsUpdated
-```
-
-Whenever a new analytics event is created, the server broadcasts the updated information.
+When analytics change, the backend emits an event similar to:
 
 ```javascript
 io.emit("analyticsUpdated", {
-    analytics,
-    event
+  analytics,
+  event
 });
 ```
 
-The React dashboard listens for these updates and immediately updates its state.
+The React dashboard listens for the `analyticsUpdated` event and updates its state accordingly.
 
-```text
-New Event
-    │
-    ▼
-MongoDB
-    │
-    ▼
-Analytics Recalculated
-    │
-    ▼
-analyticsUpdated
-    │
-    ▼
-React State Updated
-    │
-    ▼
-Dashboard Changes
-```
+This allows connected clients to receive new information immediately.
 
 ---
 
-## Getting Started
+# Tech Stack
 
-### 1. Clone the Repository
+| Technology        | Purpose                             |
+| ----------------- | ----------------------------------- |
+| **React**         | Frontend dashboard                  |
+| **Node.js**       | Backend runtime                     |
+| **Express.js**    | REST API                            |
+| **MongoDB Atlas** | Cloud database                      |
+| **Mongoose**      | MongoDB object modeling             |
+| **Socket.IO**     | Real-time communication             |
+| **Axios**         | HTTP requests                       |
+| **Recharts**      | Data visualization                  |
+| **Lucide React**  | Interface icons                     |
+| **Vite**          | Frontend development and build tool |
 
-```bash
-git clone <your-repository-url>
-```
+---
 
-### 2. Navigate to the Project
 
-```bash
-cd real-time-analytics-dashboard
-```
+# Environment Variables
 
-### 3. Install Dependencies
-
-Install backend dependencies:
-
-```bash
-cd backend
-npm install
-```
-
-Install frontend dependencies:
-
-```bash
-cd ../frontend
-npm install
-```
-
-### 4. Configure Environment Variables
-
-Create a `.env` file inside the backend directory:
+Create a `.env` file inside the `backend` directory.
 
 ```env
 PORT=5000
 MONGODB_URI=your_mongodb_atlas_connection_string
 ```
 
-Keep your `.env` file private and never commit database credentials to GitHub.
+If your application uses additional environment variables, add them here as well.
 
-### 5. Start the Backend
+### Important
+
+Never commit your `.env` file to GitHub.
+
+Add the following to `.gitignore`:
+
+```text
+.env
+node_modules/
+```
+
+---
+
+# Getting Started
+
+## 1. Clone the Repository
+
+```bash
+git clone <your-repository-url>
+```
+
+## 2. Navigate to the Project
+
+```bash
+cd real-time-analytics-dashboard
+```
+
+## 3. Install Backend Dependencies
+
+```bash
+cd backend
+npm install
+```
+
+## 4. Install Frontend Dependencies
+
+Open another terminal:
+
+```bash
+cd frontend
+npm install
+```
+
+## 5. Configure MongoDB
+
+Create a MongoDB Atlas database and add your connection string to:
+
+```text
+backend/.env
+```
+
+Example:
+
+```env
+MONGODB_URI=your_connection_string
+```
+
+## 6. Start the Backend
 
 ```bash
 cd backend
@@ -334,7 +423,7 @@ Backend:
 http://localhost:5000
 ```
 
-### 6. Start the Frontend
+## 7. Start the Frontend
 
 Open another terminal:
 
@@ -351,74 +440,40 @@ http://localhost:5173
 
 ---
 
-## Development Progress
+# 🧪 Testing the Application
 
-* [x] Backend server setup
-* [x] MongoDB Atlas connection
-* [x] Document API
-* [x] Event logging API
-* [x] Analytics API
-* [x] Socket.IO integration
-* [x] Real-time event updates
-* [x] React frontend
-* [x] Analytics dashboard
-* [x] Live event feed
-* [x] Analytics charts
-* [x] Document tracking
-* [ ] Advanced analytics filters
-* [ ] Authentication & authorization
-* [ ] Analytics reports
-* [ ] CSV export
-* [ ] Production deployment
-
----
-
-## Future Improvements
-
-The project can be extended with:
-
-* Advanced date and time filters
-* Document-specific analytics pages
-* Unique visitor tracking
-* Event history and filtering
-* More detailed analytics charts
-* CSV and report exports
-* Authentication and role-based access
-* Production deployment
-* Performance optimization for large event volumes
-
----
-
-## Why This Project?
-
-This project explores how a modern full-stack application can combine **traditional APIs, cloud databases, event-driven architecture, and WebSockets** to deliver continuously updated information.
-
-The main focus is understanding the complete flow:
+Once both servers are running, the basic flow is:
 
 ```text
-Collect
-   ↓
-Store
-   ↓
-Process
-   ↓
-Broadcast
-   ↓
-Visualize
+Frontend
+   │
+   ▼
+Create / Trigger Event
+   │
+   ▼
+Backend API
+   │
+   ▼
+MongoDB
+   │
+   ▼
+Analytics Processing
+   │
+   ▼
+Socket.IO
+   │
+   ▼
+Dashboard
 ```
 
-It demonstrates how backend events can move from a database to a live frontend without requiring constant page refreshes.
+You should see the analytics update without refreshing the browser.
 
 ---
 
-<div align="center">
+# Support
 
-## Built for Real-Time. Designed to Scale.
+If you found this project useful or interesting, consider giving the repository a ⭐ on GitHub.
 
-**Turning application events into meaningful insights.**
-
-<br>
-
-If you found this project interesting, consider giving the repository a star.
-
-</div>
+<p align="center">
+  ⚡ <strong>Built for Real-Time. Designed to Scale.</strong>
+</p>
