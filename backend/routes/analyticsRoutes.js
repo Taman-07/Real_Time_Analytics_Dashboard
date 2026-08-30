@@ -1,30 +1,70 @@
-const express = require("express");
+import express from "express";
 
-const {
-    createDocument,
-    getDocuments,
+import {
     createEvent,
-    getEvents,
-    getAnalytics
-} = require("../controllers/analyticsController");
+    getDashboardAnalytics,
+    getRecentEvents,
+
+    createOrder,
+    updateOrderStatus,
+
+    createProduct,
+    getProducts
+
+} from "../controllers/analyticsController.js";
+
 
 const router = express.Router();
 
 
-// Documents
-router.post("/documents", createDocument);
+// ============================================================
+// ANALYTICS / EVENTS
+// ============================================================
 
-router.get("/documents", getDocuments);
+router.post(
+    "/event",
+    createEvent
+);
+
+router.get(
+    "/dashboard",
+    getDashboardAnalytics
+);
+
+router.get(
+    "/events",
+    getRecentEvents
+);
 
 
-// Events
-router.post("/events", createEvent);
+// ============================================================
+// ORDERS
+// ============================================================
 
-router.get("/events", getEvents);
+router.post(
+    "/orders",
+    createOrder
+);
+
+router.patch(
+    "/orders/:orderId/status",
+    updateOrderStatus
+);
 
 
-// Analytics
-router.get("/analytics", getAnalytics);
+// ============================================================
+// PRODUCTS
+// ============================================================
+
+router.post(
+    "/products",
+    createProduct
+);
+
+router.get(
+    "/products",
+    getProducts
+);
 
 
-module.exports = router;
+export default router;
