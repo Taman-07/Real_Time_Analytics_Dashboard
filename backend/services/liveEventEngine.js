@@ -216,7 +216,7 @@ const createSimulatedOrder = async (
             "Priya Singh",
             "Rahul Kumar",
             "Ananya Verma",
-            "Zade",
+            "Pawan Singh",
             "Riya Kapoor",
             "Arjun Mehta"
 

@@ -808,12 +808,12 @@ const homeCss = `
 }
 
 .home-nav-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 24px;
+  max-width: none;
+  margin: 0;
+  padding: 0 32px;
   height: 68px;
   display: grid;
-  grid-template-columns: minmax(230px, 1fr) auto minmax(220px, 1fr);
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 28px;
 }
