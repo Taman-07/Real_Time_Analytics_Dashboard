@@ -1,23 +1,12 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-
-import {
-  Eye,
-  EyeOff,
-  ArrowRight,
-  Mail,
-  Lock,
-  User,
-} from "lucide-react";
-
+import { Eye, EyeOff } from "lucide-react";
+import { FcGoogle } from "react-icons/fc";
+import { FaApple, FaFacebookF } from "react-icons/fa";
 import API from "../services/api";
 
 function Signup() {
   const navigate = useNavigate();
-
-  // ============================================================
-  // FORM STATE
-  // ============================================================
 
   const [form, setForm] = useState({
     firstName: "",
@@ -27,52 +16,35 @@ function Signup() {
   });
 
   const [showPassword, setShowPassword] = useState(false);
-
   const [error, setError] = useState("");
-
   const [loading, setLoading] = useState(false);
 
-  // ============================================================
-  // HANDLE CHANGE
-  // ============================================================
-
   const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
-
+    setForm({ ...form, [e.target.name]: e.target.value });
     setError("");
   };
 
   // ============================================================
-  // SIGNUP
+  // SUBMIT (Preserving exact backend logic & validations)
   // ============================================================
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setError("");
 
-    // Frontend validation
     if (form.firstName.trim().length < 4) {
-      setError("First name must be at least 4 characters.");
-      return;
+      return setError("First name must be at least 4 characters.");
     }
 
     if (form.lastName.trim().length < 2) {
-      setError("Last name must be at least 2 characters.");
-      return;
+      return setError("Last name must be at least 2 characters.");
     }
 
     if (!form.email.trim()) {
-      setError("Please enter your email address.");
-      return;
+      return setError("Please enter your email address.");
     }
 
     if (form.password.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return;
+      return setError("Password must be at least 6 characters.");
     }
 
     setLoading(true);
@@ -85,33 +57,19 @@ function Signup() {
         password: form.password,
       });
 
-      console.log("SIGNUP RESPONSE:", response.data);
-
       if (response.data?.success) {
-        // Save token if backend sends one
         if (response.data?.token) {
-          localStorage.setItem(
-            "token",
-            response.data.token
-          );
+          localStorage.setItem("token", response.data.token);
         }
 
-        // Save user if backend sends user data
         if (response.data?.user) {
-          localStorage.setItem(
-            "user",
-            JSON.stringify(response.data.user)
-          );
+          localStorage.setItem("user", JSON.stringify(response.data.user));
         }
 
-        navigate("/analytics", {
-          replace: true,
-        });
+        // Redirect to homepage after signup
+        navigate("/", { replace: true });
       } else {
-        setError(
-          response.data?.message ||
-            "Failed to create account."
-        );
+        setError(response.data?.message || "Failed to create account.");
       }
     } catch (err) {
       console.error("SIGNUP ERROR:", err);
@@ -127,9 +85,7 @@ function Signup() {
           "Unable to connect to the server. Please make sure your backend is running."
         );
       } else {
-        setError(
-          "Something went wrong. Please try again."
-        );
+        setError("Something went wrong. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -137,1528 +93,617 @@ function Signup() {
   };
 
   return (
-    <div className="signup-page">
+    <div className="signup-root">
+      <style>{signupCss}</style>
 
-      <style>{`
+      <main className="signup-wrapper">
+        <div className="signup-card-split">
+          <section className="signup-form-side">
+            <div className="form-inner">
 
-        @import url(
-          'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap'
-        );
+              <div className="form-eyebrow">GET STARTED</div>
 
-        /* ============================================================
-           RESET
-        ============================================================ */
-
-        * {
-          box-sizing: border-box;
-        }
-
-        html,
-        body,
-        #root {
-          margin: 0;
-          padding: 0;
-          min-height: 100%;
-        }
-
-        body {
-          background: #000000;
-        }
-
-        button,
-        input {
-          font-family: inherit;
-        }
-
-
-        /* ============================================================
-           PAGE
-        ============================================================ */
-
-        .signup-page {
-          min-height: 100vh;
-          width: 100%;
-
-          display: flex;
-          align-items: center;
-          justify-content: center;
-
-          padding: 30px;
-
-          font-family:
-            "Inter",
-            ui-sans-serif,
-            system-ui,
-            -apple-system,
-            BlinkMacSystemFont,
-            "Segoe UI",
-            sans-serif;
-
-          background:
-            radial-gradient(
-              circle at 50% -15%,
-              rgba(37, 99, 235, 0.18),
-              transparent 36%
-            ),
-
-            radial-gradient(
-              circle at 100% 100%,
-              rgba(14, 165, 233, 0.08),
-              transparent 30%
-            ),
-
-            #000000;
-        }
-
-
-        /* ============================================================
-           MAIN CONTAINER
-        ============================================================ */
-
-        .signup-container {
-          width: 100%;
-          max-width: 1140px;
-
-          min-height: 700px;
-
-          display: flex;
-
-          overflow: hidden;
-
-          border:
-            1px solid #1c1c1c;
-
-          border-radius: 28px;
-
-          background: #080808;
-
-          box-shadow:
-            0 40px 120px
-            rgba(0, 0, 0, 0.85);
-        }
-
-
-        /* ============================================================
-           LEFT IMAGE PANEL
-        ============================================================ */
-
-        .signup-left {
-          width: 52%;
-
-          position: relative;
-
-          padding: 12px;
-
-          display: flex;
-
-          align-items: center;
-          justify-content: center;
-
-          overflow: hidden;
-
-          background:
-            linear-gradient(
-              145deg,
-              #07101d,
-              #030507
-            );
-        }
-
-
-        /* ============================================================
-           BLUE GLOW
-        ============================================================ */
-
-        .signup-glow-one {
-          position: absolute;
-
-          width: 360px;
-          height: 360px;
-
-          top: -180px;
-          left: -150px;
-
-          border-radius: 50%;
-
-          background:
-            rgba(37, 99, 235, 0.25);
-
-          filter: blur(90px);
-        }
-
-
-        .signup-glow-two {
-          position: absolute;
-
-          width: 300px;
-          height: 300px;
-
-          right: -150px;
-          bottom: -150px;
-
-          border-radius: 50%;
-
-          background:
-            rgba(14, 165, 233, 0.15);
-
-          filter: blur(90px);
-        }
-
-
-        /* ============================================================
-           IMAGE CARD
-        ============================================================ */
-
-        .signup-image-card {
-          position: relative;
-
-          z-index: 2;
-
-          width: 100%;
-          height: 676px;
-
-          overflow: hidden;
-
-          border-radius: 21px;
-
-          border:
-            1px solid
-            rgba(255, 255, 255, 0.08);
-
-          background: #050505;
-
-          box-shadow:
-            0 25px 70px
-            rgba(0, 0, 0, 0.55);
-        }
-
-
-        .signup-image-wrapper {
-          position: relative;
-
-          width: 100%;
-          height: 100%;
-
-          overflow: hidden;
-        }
-
-
-        /* ============================================================
-           IMAGE
-        ============================================================ */
-
-        .signup-image {
-          width: 100%;
-          height: 100%;
-
-          display: block;
-
-          object-fit: cover;
-
-          object-position: center;
-
-          opacity: 0.84;
-
-          transition:
-            transform 0.8s ease,
-            opacity 0.4s ease;
-        }
-
-
-        .signup-image-wrapper:hover
-        .signup-image {
-          transform: scale(1.04);
-
-          opacity: 0.92;
-        }
-
-
-        /* ============================================================
-           IMAGE OVERLAY
-        ============================================================ */
-
-        .signup-image-overlay {
-          position: absolute;
-
-          inset: 0;
-
-          display: flex;
-
-          flex-direction: column;
-
-          justify-content: flex-end;
-
-          padding: 44px;
-
-          background:
-            linear-gradient(
-              to top,
-              rgba(0, 0, 0, 0.96),
-              rgba(0, 0, 0, 0.42) 50%,
-              rgba(0, 0, 0, 0.03)
-            );
-        }
-
-
-        /* ============================================================
-           IMAGE TAG
-        ============================================================ */
-
-        .signup-image-tag {
-          width: fit-content;
-
-          display: inline-flex;
-
-          align-items: center;
-
-          gap: 8px;
-
-          padding:
-            8px 13px;
-
-          margin-bottom: 17px;
-
-          border-radius: 100px;
-
-          background:
-            rgba(37, 99, 235, 0.14);
-
-          border:
-            1px solid
-            rgba(96, 165, 250, 0.30);
-
-          color: #93c5fd;
-
-          font-size: 10px;
-
-          font-weight: 700;
-
-          letter-spacing: 1.4px;
-
-          text-transform: uppercase;
-
-          backdrop-filter: blur(12px);
-        }
-
-
-        .signup-tag-dot {
-          width: 6px;
-          height: 6px;
-
-          border-radius: 50%;
-
-          background: #60a5fa;
-
-          box-shadow:
-            0 0 10px
-            rgba(96, 165, 250, 0.8);
-        }
-
-
-        /* ============================================================
-           IMAGE HEADING
-        ============================================================ */
-
-        .signup-image-overlay h1 {
-          margin: 0;
-
-          color: #ffffff;
-
-          font-size: 45px;
-
-          line-height: 1.04;
-
-          letter-spacing: -2.4px;
-
-          font-weight: 700;
-        }
-
-
-        .signup-image-overlay p {
-          max-width: 410px;
-
-          margin:
-            17px 0 0;
-
-          color: #a1a1aa;
-
-          font-size: 14px;
-
-          line-height: 1.7;
-
-          font-weight: 400;
-        }
-
-
-        /* ============================================================
-           RIGHT FORM PANEL
-        ============================================================ */
-
-        .signup-right {
-          width: 48%;
-
-          display: flex;
-
-          align-items: center;
-
-          justify-content: center;
-
-          padding:
-            60px 72px;
-
-          background: #080808;
-        }
-
-
-        .signup-form-container {
-          width: 100%;
-
-          max-width: 410px;
-        }
-
-
-        /* ============================================================
-           BLUE ACCENT
-        ============================================================ */
-
-        .signup-top-line {
-          width: 42px;
-          height: 3px;
-
-          margin-bottom: 27px;
-
-          border-radius: 10px;
-
-          background:
-            linear-gradient(
-              90deg,
-              #3b82f6,
-              #60a5fa
-            );
-
-          box-shadow:
-            0 0 18px
-            rgba(59, 130, 246, 0.35);
-        }
-
-
-        /* ============================================================
-           HEADING
-        ============================================================ */
-
-        .signup-heading h2 {
-          margin: 0;
-
-          color: #fafafa;
-
-          font-size: 44px;
-
-          line-height: 1.08;
-
-          letter-spacing: -2px;
-
-          font-weight: 700;
-        }
-
-
-        .signup-heading p {
-          margin-top: 14px;
-
-          margin-bottom: 36px;
-
-          color: #a1a1aa;
-
-          font-size: 15px;
-
-          line-height: 1.65;
-
-          font-weight: 400;
-        }
-
-
-        /* ============================================================
-           DIVIDER
-        ============================================================ */
-
-        .signup-divider {
-          width: 100%;
-
-          height: 1px;
-
-          margin-bottom: 27px;
-
-          background: #1f1f1f;
-        }
-
-
-        /* ============================================================
-           ERROR
-        ============================================================ */
-
-        .signup-error {
-          display: flex;
-
-          align-items: center;
-
-          margin:
-            5px 0 18px;
-
-          padding:
-            12px 14px;
-
-          border-radius: 10px;
-
-          border:
-            1px solid
-            rgba(239, 68, 68, 0.25);
-
-          background:
-            rgba(239, 68, 68, 0.08);
-
-          color: #fca5a5;
-
-          font-size: 13px;
-
-          line-height: 1.5;
-
-          font-weight: 450;
-        }
-
-
-        /* ============================================================
-           NAME ROW
-        ============================================================ */
-
-        .name-row {
-          display: grid;
-
-          grid-template-columns:
-            1fr 1fr;
-
-          gap: 14px;
-        }
-
-
-        /* ============================================================
-           FORM GROUP
-        ============================================================ */
-
-        .signup-form-group {
-          margin-bottom: 20px;
-        }
-
-
-        /* ============================================================
-           LABEL
-        ============================================================ */
-
-        .signup-label {
-          display: block;
-
-          margin-bottom: 9px;
-
-          color: #d4d4d8;
-
-          font-size: 13px;
-
-          font-weight: 600;
-        }
-
-
-        /* ============================================================
-           INPUT WRAPPER
-        ============================================================ */
-
-        .signup-input-wrapper {
-          position: relative;
-
-          width: 100%;
-        }
-
-
-        /* ============================================================
-           INPUT ICON
-        ============================================================ */
-
-        .signup-input-icon {
-          position: absolute;
-
-          left: 16px;
-
-          top: 50%;
-
-          transform:
-            translateY(-50%);
-
-          color: #71717a;
-
-          font-size: 15px;
-
-          pointer-events: none;
-
-          transition:
-            color 0.2s ease;
-        }
-
-
-        .signup-input-wrapper:focus-within
-        .signup-input-icon {
-          color: #60a5fa;
-        }
-
-
-        /* ============================================================
-           ALL INPUTS
-        ============================================================ */
-
-        .signup-input {
-          width: 100%;
-
-          height: 57px;
-
-          padding:
-            0 50px 0 46px;
-
-          border:
-            1px solid #252525;
-
-          border-radius: 12px;
-
-          outline: none;
-
-          background: #0d0d0d;
-
-          color: #fafafa;
-
-          font-family:
-            "Inter",
-            ui-sans-serif,
-            system-ui,
-            sans-serif;
-
-          font-size: 15px;
-
-          font-weight: 400;
-
-          transition:
-            border-color 0.2s ease,
-            background 0.2s ease,
-            box-shadow 0.2s ease;
-        }
-
-
-        .signup-input::placeholder {
-          color: #71717a;
-
-          font-size: 14px;
-        }
-
-
-        .signup-input:hover {
-          border-color: #363636;
-
-          background: #101010;
-        }
-
-
-        .signup-input:focus {
-          border-color: #2563eb;
-
-          background: #0d1117;
-
-          box-shadow:
-            0 0 0 3px
-            rgba(37, 99, 235, 0.12);
-        }
-
-
-        /* ============================================================
-           PASSWORD WRAPPER
-        ============================================================ */
-
-        .signup-password-wrapper {
-          position: relative;
-
-          width: 100%;
-        }
-
-
-        /* ============================================================
-           PASSWORD INPUT
-        ============================================================ */
-
-        .signup-password-input {
-          width: 100%;
-
-          height: 57px;
-
-          padding:
-            0 52px 0 46px;
-
-          border:
-            1px solid #252525;
-
-          border-radius: 12px;
-
-          outline: none;
-
-          background: #0d0d0d;
-
-          color: #fafafa;
-
-          font-family:
-            "Inter",
-            ui-sans-serif,
-            system-ui,
-            sans-serif;
-
-          font-size: 15px;
-
-          font-weight: 400;
-
-          transition:
-            border-color 0.2s ease,
-            background 0.2s ease,
-            box-shadow 0.2s ease;
-        }
-
-
-        .signup-password-input::placeholder {
-          color: #71717a;
-
-          font-size: 14px;
-        }
-
-
-        .signup-password-input:hover {
-          border-color: #363636;
-
-          background: #101010;
-        }
-
-
-        .signup-password-input:focus {
-          border-color: #2563eb;
-
-          background: #0d1117;
-
-          box-shadow:
-            0 0 0 3px
-            rgba(37, 99, 235, 0.12);
-        }
-
-
-        /* ============================================================
-           PASSWORD LOCK ICON
-        ============================================================ */
-
-        .signup-password-icon {
-          position: absolute;
-
-          left: 16px;
-
-          top: 50%;
-
-          transform:
-            translateY(-50%);
-
-          color: #71717a;
-
-          pointer-events: none;
-
-          transition:
-            color 0.2s ease;
-        }
-
-
-        .signup-password-wrapper:focus-within
-        .signup-password-icon {
-          color: #60a5fa;
-        }
-
-
-        /* ============================================================
-           ONLY ONE EYE BUTTON
-        ============================================================ */
-
-        .signup-password-toggle {
-          position: absolute;
-
-          right: 12px;
-
-          top: 50%;
-
-          transform:
-            translateY(-50%);
-
-          width: 36px;
-
-          height: 36px;
-
-          display: flex;
-
-          align-items: center;
-
-          justify-content: center;
-
-          border: none;
-
-          outline: none;
-
-          border-radius: 8px;
-
-          background: transparent;
-
-          color: #71717a;
-
-          cursor: pointer;
-
-          padding: 0;
-        }
-
-
-        .signup-password-toggle:hover {
-          color: #93c5fd;
-
-          background:
-            rgba(59, 130, 246, 0.10);
-        }
-
-
-        .signup-password-toggle:focus {
-          outline: none;
-
-          color: #60a5fa;
-        }
-
-
-        /* ============================================================
-           PASSWORD HINT
-        ============================================================ */
-
-        .signup-password-hint {
-          margin-top: 7px;
-
-          color: #71717a;
-
-          font-size: 11px;
-        }
-
-
-        /* ============================================================
-           CREATE ACCOUNT BUTTON
-        ============================================================ */
-
-        .signup-button {
-          width: 100%;
-
-          height: 57px;
-
-          margin-top: 7px;
-
-          display: flex;
-
-          align-items: center;
-
-          justify-content: center;
-
-          gap: 10px;
-
-          border: none;
-
-          border-radius: 12px;
-
-          background:
-            linear-gradient(
-              135deg,
-              #3b82f6,
-              #2563eb
-            );
-
-          color: #ffffff;
-
-          font-family:
-            "Inter",
-            ui-sans-serif,
-            system-ui,
-            sans-serif;
-
-          font-size: 15px;
-
-          font-weight: 600;
-
-          cursor: pointer;
-
-          box-shadow:
-            0 12px 30px
-            rgba(37, 99, 235, 0.22);
-
-          transition:
-            transform 0.2s ease,
-            box-shadow 0.2s ease,
-            filter 0.2s ease;
-        }
-
-
-        .signup-button:hover {
-          transform:
-            translateY(-2px);
-
-          filter:
-            brightness(1.08);
-
-          box-shadow:
-            0 16px 38px
-            rgba(37, 99, 235, 0.32);
-        }
-
-
-        .signup-button:active {
-          transform:
-            translateY(0);
-        }
-
-
-        .signup-button:disabled {
-          opacity: 0.55;
-
-          cursor: not-allowed;
-
-          transform: none;
-
-          box-shadow: none;
-        }
-
-
-        .signup-arrow {
-          transition:
-            transform 0.2s ease;
-        }
-
-
-        .signup-button:hover
-        .signup-arrow {
-          transform:
-            translateX(3px);
-        }
-
-
-        /* ============================================================
-           OR DIVIDER
-        ============================================================ */
-
-        .signup-or-divider {
-          display: flex;
-
-          align-items: center;
-
-          gap: 12px;
-
-          margin:
-            29px 0 19px;
-
-          color: #71717a;
-
-          font-size: 10px;
-
-          font-weight: 600;
-
-          letter-spacing: 1px;
-        }
-
-
-        .signup-or-divider::before,
-        .signup-or-divider::after {
-          content: "";
-
-          flex: 1;
-
-          height: 1px;
-
-          background: #1f1f1f;
-        }
-
-
-        /* ============================================================
-           LOGIN LINK
-        ============================================================ */
-
-        .signup-bottom {
-          text-align: center;
-
-          color: #71717a;
-
-          font-size: 13px;
-
-          font-weight: 400;
-        }
-
-
-        .signup-bottom a {
-          margin-left: 6px;
-
-          color: #60a5fa;
-
-          font-size: 13px;
-
-          font-weight: 600;
-
-          text-decoration: none;
-
-          transition:
-            color 0.2s ease;
-        }
-
-
-        .signup-bottom a:hover {
-          color: #93c5fd;
-
-          text-decoration: underline;
-        }
-
-
-        /* ============================================================
-           TABLET
-        ============================================================ */
-
-        @media (max-width: 950px) {
-
-          .signup-page {
-            padding: 18px;
-          }
-
-
-          .signup-container {
-            max-width: 520px;
-
-            min-height: auto;
-          }
-
-
-          .signup-left {
-            display: none;
-          }
-
-
-          .signup-right {
-            width: 100%;
-
-            min-height: 700px;
-
-            padding:
-              60px 50px;
-          }
-
-        }
-
-
-        /* ============================================================
-           MOBILE
-        ============================================================ */
-
-        @media (max-width: 520px) {
-
-          .signup-page {
-            padding: 0;
-
-            background: #000000;
-          }
-
-
-          .signup-container {
-            width: 100%;
-
-            min-height: 100vh;
-
-            border: none;
-
-            border-radius: 0;
-
-            box-shadow: none;
-          }
-
-
-          .signup-right {
-            width: 100%;
-
-            min-height: 100vh;
-
-            padding:
-              40px 22px;
-          }
-
-
-          .signup-top-line {
-            margin-bottom: 23px;
-          }
-
-
-          .signup-heading h2 {
-            font-size: 36px;
-
-            letter-spacing: -1.5px;
-          }
-
-
-          .signup-heading p {
-            font-size: 14px;
-
-            margin-bottom: 31px;
-          }
-
-
-          .signup-input,
-          .signup-password-input {
-            height: 56px;
-
-            font-size: 15px;
-          }
-
-
-          .signup-button {
-            height: 56px;
-
-            font-size: 15px;
-          }
-
-        }
-
-
-        /* ============================================================
-           SMALL MOBILE
-        ============================================================ */
-
-        @media (max-width: 480px) {
-
-          .signup-right {
-            padding:
-              35px 20px;
-          }
-
-
-          .signup-heading h2 {
-            font-size: 32px;
-          }
-
-
-          .name-row {
-            grid-template-columns: 1fr;
-
-            gap: 0;
-          }
-
-        }
-
-      `}</style>
-
-
-      {/* ============================================================
-          MAIN CONTAINER
-      ============================================================ */}
-
-      <div className="signup-container">
-
-
-        {/* ==========================================================
-            LEFT SIDE
-        ========================================================== */}
-
-        <div className="signup-left">
-
-          <div className="signup-glow-one"></div>
-
-          <div className="signup-glow-two"></div>
-
-
-          {/* IMAGE */}
-
-          <div className="signup-image-card">
-
-            <div className="signup-image-wrapper">
-
-              <img
-                className="signup-image"
-                src="https://i.pinimg.com/736x/40/21/41/402141967f99db74c27b8e0db9482dc1.jpg"
-                alt="Analytics"
-              />
-
-
-              <div className="signup-image-overlay">
-
-
-                <h1>
-
-                  Insights today,
-                  <br />
-
-                  growth tomorrow.
-
-                </h1>
-
-
+              <div className="form-header">
+                <h1>Create your account.</h1>
                 <p>
-
-                  Create your account and
-                  start exploring powerful
-                  analytics and insights.
-
+                  Join Shoplytics to track your store's sales,
+                  customers, and orders live.
                 </p>
-
               </div>
 
-            </div>
+              {/* ERROR ALERT */}
+              {error && (
+                <div className="signup-error-alert" role="alert">
+                  <span>{error}</span>
+                </div>
+              )}
 
-          </div>
+              <form onSubmit={handleSubmit} className="signup-form">
 
-        </div>
-
-
-        {/* ==========================================================
-            RIGHT SIDE
-        ========================================================== */}
-
-        <div className="signup-right">
-
-          <div className="signup-form-container">
-
-
-            {/* BLUE LINE */}
-
-            <div className="signup-top-line"></div>
-
-
-            {/* HEADING */}
-
-            <div className="signup-heading">
-
-              <h2>
-                Create account
-              </h2>
-
-              <p>
-                Start your journey with us today.
-              </p>
-
-            </div>
-
-
-            {/* DIVIDER */}
-
-            <div className="signup-divider"></div>
-
-
-            {/* ERROR */}
-
-            {error && (
-
-              <div className="signup-error">
-
-                {error}
-
-              </div>
-
-            )}
-
-
-            {/* ======================================================
-                FORM
-            ====================================================== */}
-
-            <form onSubmit={handleSubmit}>
-
-
-              {/* ====================================================
-                  FIRST + LAST NAME
-              ==================================================== */}
-
-              <div className="name-row">
-
-
-                {/* FIRST NAME */}
-
-                <div className="signup-form-group">
-
-                  <label className="signup-label">
-                    First name
-                  </label>
-
-
-                  <div className="signup-input-wrapper">
-
-                    <User
-                      className="signup-input-icon"
-                      size={17}
-                    />
-
-
+                {/* NAME ROW */}
+                <div className="form-row-two">
+                  <div className="form-group">
+                    <label htmlFor="firstName" className="form-label">
+                      First name
+                    </label>
                     <input
-                      className="signup-input"
-
-                      type="text"
-
+                      id="firstName"
                       name="firstName"
-
+                      type="text"
+                      className="form-input"
                       placeholder="First name"
-
                       value={form.firstName}
-
                       onChange={handleChange}
-
                       autoComplete="given-name"
-
                       required
                     />
-
                   </div>
 
+                  <div className="form-group">
+                    <label htmlFor="lastName" className="form-label">
+                      Last name
+                    </label>
+                    <input
+                      id="lastName"
+                      name="lastName"
+                      type="text"
+                      className="form-input"
+                      placeholder="Last name"
+                      value={form.lastName}
+                      onChange={handleChange}
+                      autoComplete="family-name"
+                      required
+                    />
+                  </div>
                 </div>
 
+                {/* EMAIL */}
+                <div className="form-group">
+                  <label htmlFor="email" className="form-label">
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    className="form-input"
+                    placeholder="Enter your email"
+                    value={form.email}
+                    onChange={handleChange}
+                    autoComplete="email"
+                    required
+                  />
+                </div>
 
-                {/* LAST NAME */}
-
-                <div className="signup-form-group">
-
-                  <label className="signup-label">
-                    Last name
+                {/* PASSWORD */}
+                <div className="form-group">
+                  <label htmlFor="password" className="form-label">
+                    Password
                   </label>
 
-
-                  <div className="signup-input-wrapper">
-
-                    <User
-                      className="signup-input-icon"
-                      size={17}
-                    />
-
-
+                  <div className="input-wrap">
                     <input
-                      className="signup-input"
-
-                      type="text"
-
-                      name="lastName"
-
-                      placeholder="Last name"
-
-                      value={form.lastName}
-
+                      id="password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      className="form-input password-input"
+                      placeholder="At least 6 characters"
+                      value={form.password}
                       onChange={handleChange}
-
-                      autoComplete="family-name"
-
+                      minLength={6}
+                      autoComplete="new-password"
                       required
                     />
 
+                    <button
+                      type="button"
+                      className="btn-password-toggle"
+                      onClick={() =>
+                        setShowPassword((previous) => !previous)
+                      }
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
+                    >
+                      {showPassword ? (
+                        <EyeOff size={18} />
+                      ) : (
+                        <Eye size={18} />
+                      )}
+                    </button>
                   </div>
 
+                  <span className="password-hint">
+                    Password must be at least 6 characters long.
+                  </span>
                 </div>
 
+                {/* SUBMIT */}
+                <button
+                  type="submit"
+                  className="btn-signup-submit"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <span className="btn-spinner-wrap">
+                      <span className="spinner" />
+                      <span>Creating account...</span>
+                    </span>
+                  ) : (
+                    <span>Create Account</span>
+                  )}
+                </button>
+              </form>
+
+              {/* SOCIAL DIVIDER */}
+              <div className="social-divider">
+                <span className="divider-line" />
+                <span className="divider-text">OR CONTINUE WITH</span>
+                <span className="divider-line" />
               </div>
 
+              {/* SOCIAL BUTTONS */}
+              <div className="social-buttons-row">
+                <button
+                  type="button"
+                  className="btn-social"
+                  aria-label="Continue with Google"
+                  onClick={() =>
+                    setError(
+                      "Google sign up is simulated. Use the form above."
+                    )
+                  }
+                >
+                  <FcGoogle size={20} />
+                </button>
 
-              {/* ====================================================
-                  EMAIL
-              ==================================================== */}
+                <button
+                  type="button"
+                  className="btn-social"
+                  aria-label="Continue with Facebook"
+                  onClick={() =>
+                    setError(
+                      "Facebook sign up is simulated. Use the form above."
+                    )
+                  }
+                >
+                  <FaFacebookF size={17} color="#1877f2" />
+                </button>
 
-              <div className="signup-form-group">
-
-                <label className="signup-label">
-                  Email address
-                </label>
-
-
-                <div className="signup-input-wrapper">
-
-                  <Mail
-                    className="signup-input-icon"
-                    size={17}
-                  />
-
-
-                  <input
-                    className="signup-input"
-
-                    type="email"
-
-                    name="email"
-
-                    placeholder="you@example.com"
-
-                    value={form.email}
-
-                    onChange={handleChange}
-
-                    autoComplete="email"
-
-                    required
-                  />
-
-                </div>
-
+                <button
+                  type="button"
+                  className="btn-social"
+                  aria-label="Continue with Apple"
+                  onClick={() =>
+                    setError(
+                      "Apple sign up is simulated. Use the form above."
+                    )
+                  }
+                >
+                  <FaApple size={20} />
+                </button>
               </div>
 
-
-              {/* ====================================================
-                  PASSWORD
-              ==================================================== */}
-
-              <div className="signup-form-group">
-
-                <label className="signup-label">
-                  Password
-                </label>
-
-
-                <div className="signup-password-wrapper">
-
-
-                  {/* LOCK ICON */}
-
-                  <Lock
-                    className="signup-password-icon"
-                    size={17}
-                  />
-
-
-                  {/* PASSWORD INPUT */}
-
-                  <input
-                    className="signup-password-input"
-
-                    type={
-                      showPassword
-                        ? "text"
-                        : "password"
-                    }
-
-                    name="password"
-
-                    placeholder="Enter your password"
-
-                    value={form.password}
-
-                    onChange={handleChange}
-
-                    minLength={6}
-
-                    autoComplete="new-password"
-
-                    required
-                  />
-
-
-                  {/* ONLY ONE EYE */}
-
-                  <button
-                    type="button"
-
-                    className="signup-password-toggle"
-
-                    onClick={() =>
-                      setShowPassword(
-                        !showPassword
-                      )
-                    }
-
-                    aria-label={
-                      showPassword
-                        ? "Hide password"
-                        : "Show password"
-                    }
-                  >
-
-                    {showPassword ? (
-
-                      <EyeOff size={18} />
-
-                    ) : (
-
-                      <Eye size={18} />
-
-                    )}
-
-                  </button>
-
-                </div>
-
-
-                <div className="signup-password-hint">
-
-                  Password must be at least 6 characters.
-
-                </div>
-
+              {/* FOOTER LINK */}
+              <div className="signup-footer-link">
+                <span>Already have an account?</span>
+                <Link to="/login" className="link-highlight">
+                  Log In
+                </Link>
               </div>
-
-
-              {/* ====================================================
-                  CREATE ACCOUNT BUTTON
-              ==================================================== */}
-
-              <button
-                type="submit"
-
-                className="signup-button"
-
-                disabled={loading}
-              >
-
-                {loading
-                  ? "Creating account..."
-                  : "Create account"
-                }
-
-
-                {!loading && (
-
-                  <ArrowRight
-                    size={19}
-                    className="signup-arrow"
-                  />
-
-                )}
-
-              </button>
-
-            </form>
-
-
-            {/* ======================================================
-                OR
-            ====================================================== */}
-
-            <div className="signup-or-divider">
-
-              <span>
-                OR
-              </span>
-
             </div>
-
-
-            {/* ======================================================
-                LOGIN
-            ====================================================== */}
-
-            <div className="signup-bottom">
-
-              Already have an account?
-
-              <Link to="/login">
-                Log in
-              </Link>
-
-            </div>
-
-
-          </div>
-
+          </section>
         </div>
-
-      </div>
-
+      </main>
     </div>
   );
 }
+
+const signupCss = `
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
+
+/* ========================================
+   SHOPLYTICS - BLUE + BLACK
+   ======================================== */
+
+.signup-root {
+  --bg-base: #06080b;
+  --card-bg: #0b0e12;
+  --input-bg: #11151b;
+  --border-color: #1d222a;
+
+  --blue-text: #3b82f6;      /* eyebrow, button, focus */
+  --blue-text-soft: #93c5fd; /* link hover */
+
+  --text-primary: #ffffff;
+  --text-secondary: #8b95a5;
+
+  min-height: 100vh;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  font-family: Outfit, Inter, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+}
+
+/* MAIN LAYOUT */
+
+.signup-wrapper {
+  width: 100%;
+  max-width: 520px;
+  margin: auto;
+}
+
+.signup-card-split {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 26px;
+  box-shadow: 0 35px 100px rgba(0, 0, 0, 0.55);
+}
+
+/* LEFT - FORM */
+
+.signup-form-side {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 36px 40px;
+}
+
+.form-inner {
+  width: 100%;
+  max-width: 420px;
+}
+
+.form-eyebrow {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  color: var(--blue-text);
+  margin-bottom: 14px;
+}
+
+.form-header {
+  margin-bottom: 30px;
+}
+
+.form-header h1 {
+  font-size: 38px;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -1.3px;
+  color: #fff;
+  margin: 0 0 14px;
+}
+
+.form-header p {
+  font-size: 15.5px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* ERROR */
+
+.signup-error-alert {
+  padding: 13px 15px;
+  border-radius: 12px;
+  background: rgba(238, 10, 53, 0.1);
+  border: 1px solid rgba(255, 51, 85, 0.35);
+  color: #ffb3bf;
+  font-size: 13.5px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+/* FORM */
+
+.signup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.form-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #e4e8ee;
+}
+
+/* INPUTS */
+
+.input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.form-input {
+  width: 100%;
+  height: 54px;
+  box-sizing: border-box;
+  padding: 0 18px;
+  border-radius: 12px;
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  color: #fff;
+  font-family: inherit;
+  font-size: 15px;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.form-input::placeholder {
+  color: #5d6676;
+}
+
+.form-input:hover {
+  border-color: #2b323d;
+}
+
+.form-input:focus {
+  background: #131820;
+  border-color: var(--blue-text);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16);
+}
+
+.password-input {
+  padding-right: 52px;
+}
+
+/* PASSWORD EYE BUTTON */
+
+.btn-password-toggle {
+  position: absolute;
+  right: 11px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #9aa3b2;
+  cursor: pointer;
+  padding: 0;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
+}
+
+.btn-password-toggle:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.btn-password-toggle:focus-visible {
+  outline: 2px solid var(--blue-text);
+  outline-offset: 2px;
+}
+
+/* hide the browser's built-in password reveal icon (Edge/IE) so only one eye shows */
+.form-input::-ms-reveal,
+.form-input::-ms-clear {
+  display: none;
+}
+
+/* CREATE ACCOUNT BUTTON */
+
+.btn-signup-submit {
+  width: 100%;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 12px;
+  background: var(--blue-text);
+  border: none;
+  color: #fff;
+  font-family: inherit;
+  font-size: 15.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 10px 28px rgba(59, 130, 246, 0.24);
+  margin-top: 2px;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.btn-signup-submit:hover:not(:disabled) {
+  background: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px rgba(59, 130, 246, 0.34);
+}
+
+.btn-signup-submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-signup-submit:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.btn-signup-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.btn-spinner-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: signupSpin 0.8s linear infinite;
+}
+
+@keyframes signupSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* SOCIAL LOGIN */
+
+.social-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 28px 0 22px;
+}
+
+.divider-line {
+  height: 1px;
+  flex: 1;
+  background: var(--border-color);
+}
+
+.divider-text {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.8px;
+  color: #7c8697;
+  white-space: nowrap;
+}
+
+.social-buttons-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.btn-social {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50px;
+  border-radius: 12px;
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  color: #fff;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.btn-social:hover {
+  background: #171c24;
+  border-color: #25406a;
+  transform: translateY(-1px);
+}
+
+.btn-social:focus-visible {
+  outline: 2px solid var(--blue-text);
+  outline-offset: 2px;
+}
+
+/* FOOTER */
+
+.signup-footer-link {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  text-align: center;
+  margin-top: 30px;
+  color: #8b95a5;
+  font-size: 14px;
+}
+
+.link-highlight {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 700;
+  transition: color 0.2s ease;
+}
+
+.link-highlight:hover {
+  color: var(--blue-text-soft);
+  text-decoration: underline;
+}
+
+
+/* NAME ROW + HINT */
+
+.form-row-two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.password-hint {
+  font-size: 12px;
+  color: #6f7a8c;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 560px) {
+  .signup-root {
+    padding: 14px 10px;
+  }
+
+  .signup-card-split {
+    padding: 10px;
+    border-radius: 20px;
+  }
+
+  .signup-form-side {
+    padding: 24px 14px;
+  }
+
+  .form-header h1 {
+    font-size: 31px;
+  }
+
+  .social-buttons-row {
+    gap: 8px;
+  }
+
+  .form-row-two {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signup-root *,
+  .signup-root *::before,
+  .signup-root *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+`;
 
 export default Signup;
